@@ -6,7 +6,8 @@
     
     uses floating point numbers for convenience,
     not (yet) fixed point fractions as in WWI
-
+    some test s
+    
 """
 
 # 
@@ -17,13 +18,13 @@ import math
 import random
 
 #
-version = "0.1c"
+version = "0.1e"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
 pin_doDraw = 22
-pin_enZ1 = 23       # not yet used
-pin_enZ2 = 18       # not yet used
+pin_enZ1 = 18
+pin_enZ2 = 23
 pin_isKey = 27
 pin_isGun1 = 24
 pin_isGun2 = 25
@@ -79,6 +80,7 @@ def drawSmallVector(posx, posy, speedx, speedy):
     gpio.output(pin_doDraw, 1)
     time.sleep(draw_delay)
     gpio.output(pin_doDraw, 0)
+
     
 def drawPoint(posx, posy):
     """ draw a point as a vector of length 0
@@ -93,8 +95,8 @@ def drawVector(x0, y0, x1, y1):
         a chain of vectors is used.
     """
     # maximum move for a short vector at full speed
-    xmaxdist = 0.23     # 0.25 nominal; adjust hardware
-    ymaxdist = 0.23
+    xmaxdist = 0.25    # 0.25 nominal; adjust hardware
+    ymaxdist = 0.25
     
     # determine distances 
     dx = x1 - x0;
@@ -112,7 +114,7 @@ def drawVector(x0, y0, x1, y1):
        
     # determine number of segments, at least 1
     xsegs = 1 + math.floor(abs(sx))
-    ysegs = 1 +math.floor(abs(sy))
+    ysegs = 1 + math.floor(abs(sy))
     segs = max(xsegs, ysegs)
 
     # reduce distance and speed by number of segments
@@ -185,11 +187,11 @@ def drawCharacter(x0, y0, segs) :
 def navi():
     drawPoint(-0.9, -0.9)
     if gpio.input(pin_isGun1) == 0:
-        time.sleep(0.5)
+        # time.sleep(0.5)
         return -1
     drawPoint(0.9, -0.9)
     if gpio.input(pin_isGun1) == 0:
-        time.sleep(0.5)
+        # time.sleep(0.5)
         return +1
     return 0
     
@@ -197,7 +199,7 @@ def navi():
 """
     Bouncing ball 
     The ground line is either shown with points (mode = 1)
-	or as a a (long) vector for each point (mode=2)
+    or as a a (long) vector for each point (mode=2)
 """
 def show_bounce(mode) :
   
@@ -227,10 +229,7 @@ def show_bounce(mode) :
         # plot the point
         drawPoint(xpos, ypos)
         # plot the axes
-        if (mode == 1):
-            drawPoint(xpos, ground)
-        else:
-            # drawPoint(-xborder, ground)
+        if (mode == 2):
             drawVector(-xborder, ground, xborder, ground)
             drawVector(-xborder, 0.5, -xborder, ground)
         
@@ -239,9 +238,14 @@ def show_bounce(mode) :
  
         # check for stop
         if gpio.input(pin_isKey) == 0:
+            time.sleep(0.5)
             return 1;
+    if (mode == 1):
+        # draw a chain of dots
+        for i in range(0,100):
+             drawPoint(xborder*(-1+i/50), ground)
     return 0
-		
+        
 """ 
     OXO / noughts and crosses /  tic-tac-toe
     Radom computer play
@@ -295,7 +299,7 @@ def do_oxo() :
             for i in range(9):
                 oxo_state[i] = 0
             oxo_show()
-            time.sleep(0.5)
+            # time.sleep(0.5)
          
         rc = navi()
         if (rc != 0): return rc
@@ -308,7 +312,7 @@ def do_oxo() :
 """
 def do_rocket(mode) :
     # gravitation 
-    grav = 0.003
+    grav = 0.0028
     # launch angle in degrees
     launchdir = 87.0
     # fuel left
@@ -320,9 +324,9 @@ def do_rocket(mode) :
     xpos = -0.9
     ypos = 0.0
     # acceleration per fuel unit
-    accel = 0.005
+    accel = 0.004
     # 
-    burn = 0.05
+    burn = 0.04
     
     # upon launch, set inital speeds
     xspeed = 0.01 * math.cos(math.radians(launchdir))
@@ -330,21 +334,25 @@ def do_rocket(mode) :
 
     
     # main loop: accelerate while fuel, show fuel and speed
+    cnt = 1000
     while ypos >= -0.1 and ypos < 1.0 and xpos < 1.0 :
         speed = math.sqrt(xspeed*xspeed + yspeed*yspeed)
-        # accelerate if still fuel
-        if fuel > 0.0 :
-            # no need to calculate flight angle, just the speed
-            xspeed += xspeed / speed * accel
-            yspeed += yspeed / speed * accel
-            fuel -= burn
+        cnt += 1
+        if cnt > 3:
+          cnt = 0
+          # accelerate if still fuel
+          if fuel > 0.0 :
+              # no need to calculate flight angle, just the speed
+              xspeed += xspeed / speed * accel
+              yspeed += yspeed / speed * accel
+              fuel -= burn
         
-        # gavitation is always in y direction
-        yspeed -= grav
-        
-        # integrate to positions
-        xpos += xspeed
-        ypos += yspeed
+          # gavitation is always in y direction
+          yspeed -= grav
+ 
+          # integrate to positions
+          xpos += xspeed
+          ypos += yspeed
         
         # always actual point and base line
         drawPoint(xpos, ypos)
@@ -365,7 +373,7 @@ def do_rocket(mode) :
 
         fueli = int(fuel*100)
         speedi = int(speed*1000)
-        
+ 
         # mode 1 and 2:
         if mode == 1 or mode == 2 :
            drawCharacter(-0.9, -0.3, digits[fueli // 10])
@@ -379,6 +387,7 @@ def do_rocket(mode) :
             drawVector(xpos, ypos, xpos + 8*xspeed, ypos + 8*yspeed)          
         
         if gpio.input(pin_isKey) == 0:
+            time.sleep(0.5)
             return 1
 
         rc = navi()
@@ -396,7 +405,7 @@ def show_circles():
     #drawVector(-1.0, -1.0,  -1.0, 1.0)
     rc = navi()
     return rc
-	
+    
 
 
 def fig1():
@@ -417,8 +426,16 @@ def fig1():
  
 def loop():
     mode = 1
- 
+    omode = mode
     while True:
+        if mode > 9:
+             mode = 1
+        if mode < 1:
+             mode = 9
+        if omode != mode:
+             print("Mode: " + str(mode));
+             omode = mode
+ 
         if mode == 1:
             mode += fig1()
         if mode == 2:
@@ -442,12 +459,9 @@ def loop():
         if mode == 9:
             mode += do_oxo()
  
-        if mode > 9:
-             mode = 1
-        key = gpio.input(pin_isKey)
-        if key != 1:
+        if gpio.input(pin_isKey) == 0:
             mode += 1
-            print("mode " + str(mode))
+            print(mode);
             time.sleep(1.0)
             if gpio.input(pin_isKey) == 0:
                 return
@@ -460,10 +474,17 @@ print("Version " + version)
 # initialize
 gpio.setmode(gpio.BCM)
 gpio.setup(pin_doMove, gpio.OUT)
+gpio.output(pin_doMove, 0)
 gpio.setup(pin_doDraw, gpio.OUT)
+gpio.output(pin_doDraw, 0)
 gpio.setup(pin_isKey, gpio.IN, pull_up_down=gpio.PUD_UP)
 gpio.setup(pin_isGun1, gpio.IN, pull_up_down=gpio.PUD_UP)
 gpio.setup(pin_isGun2, gpio.IN, pull_up_down=gpio.PUD_UP)
+gpio.setup(pin_enZ1, gpio.OUT)
+gpio.setup(pin_enZ2, gpio.OUT)
+# temp: enable both
+gpio.output(pin_enZ1, 0)  # inverted: 0 is enable, 1 is disable
+gpio.output(pin_enZ2, 0)
 
 spi = spidev.SpiDev()
 spi.open(0, 0)
