@@ -25,10 +25,10 @@ pin_doDraw = 22
 pin_enZ1 = 18
 pin_enZ2 = 23
 pin_isKey = 27
-pin_isGun1 = 24
-pin_isGun2 = 25
-pin_isGun1on = 7
-pin_isGun2on = 4
+pin_isGun1 = 25
+pin_isGun2 = 24
+pin_isGun1on = 4
+pin_isGun2on = 7
 # SPI pins are defined by SPI interface
 
  
@@ -135,32 +135,33 @@ def getLightGuns():
     mask = 0
     # check if this is the first light gun pulse
     if not wasGunPulse1 and gpio.input(pin_isGun1) == 0:
-        mask = 0b01
+        mask = 1
         wasGunPulse1 = True
     if not wasGunPulse2 and gpio.input(pin_isGun2) == 0:
-        mask = mask | 0b10
+        mask = mask | 2
         wasGunPulse2 = True
         
     if mask != 0:
         return mask
     
+    # print(gpio.input(pin_isGun1on), gpio.input(pin_isGun2on))
     # debounce switch 1 
     if gpio.input(pin_isGun1on) == 0:
         # while switch is on, restart timer
-        gunTime1 = time.perf_counter()
+        gunTime1 = time.time()
     else:
         # switch must be off some time (debounce)
-        delta = time.perf_counter() - gunTime1
+        delta = time.time() - gunTime1
         if delta > debounceGunTime:
             wasGunPulse1 = False
             
     # debounce switch 2
     if gpio.input(pin_isGun2on) == 0:
         # while switch is on, restart timer
-        gunTime2 = time.perf_counter()
+        gunTime2 = time.time()
     else:
         # switch must be off some time (debounce)
-        delta = time.perf_counter() - gunTime2
+        delta = time.time() - gunTime2
         if delta > debounceGunTime:
             wasGunPulse2 = False
 

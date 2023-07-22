@@ -12,6 +12,16 @@ generates vector strokes on an X/Y/Z oszilloskope.
 <dt> src   <dd> Python and Arduino source
 </dl>
 
-##Versions
+## Versions
+
+
+## Remarks
+
+### Light gun
+
+The hardware provides a signal if a light gun pulse has occured
+after the last move. 
+
+
  
 
