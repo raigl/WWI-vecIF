@@ -6,7 +6,6 @@
     
     uses floating point numbers for convenience,
     not (yet) fixed point fractions as in WWI
-    some test s
     
 """
 
@@ -28,7 +27,10 @@ pin_enZ2 = 23
 pin_isKey = 27
 pin_isGun1 = 24
 pin_isGun2 = 25
+pin_isGun1on = 4
+pin_isGun2on = 7
 # SPI pins are defined by SPI interface
+
  
 def floatfix(x):
     """ Converts floating point number to integer for D/A converter
@@ -58,6 +60,8 @@ def setDA(n, val):
 move_delay = 30.0E-6
 draw_delay = 60.0E-6
 
+wasPoint = False        # true after a point drawing
+
 def drawSmallVector(posx, posy, speedx, speedy):
     """ Basic operation: Draw a vector with given speed
         As the endpoint is not directly given,
@@ -81,12 +85,85 @@ def drawSmallVector(posx, posy, speedx, speedy):
     time.sleep(draw_delay)
     gpio.output(pin_doDraw, 0)
 
+    # reset point drawing flag
+    wasPoint = False
+
+
     
 def drawPoint(posx, posy):
     """ draw a point as a vector of length 0
     """
+
     drawSmallVector(posx, posy, 0.0, 0.0)
     
+    # last one was a point drawing    
+    wasPoint = True
+
+
+        
+"""
+    The light gun has a trigger switch for one-shot operation:
+    Only the first pulse after display of a point is valid;
+    more are to be disabled while the trigger switch is still on.
+    
+    As no pulses are transmitted before the switch is on,
+    the first such pulse (after display of a point) sets a flag
+    to disable more (of this light gun).
+    
+    This flag is reset once the switch is off more than 50msec (debouncing)
+"""
+
+wasGunPulse1 = True          # if a pulse was delivered
+gunTime1= 0.0
+wasGunPulse2 = True          # if a pulse was delivered
+gunTime2= 0.0
+debounceGunTime = 0.05
+    
+  
+def getLightGuns():
+    """
+        returns 0 if no light gun detected, or set the (two) lower bits
+        
+    """  
+    
+    # light gun signals are evaluated only if there was a point drawing
+    if not wasPoint:
+        return
+    
+    mask = 0
+    # check if this is the first light gun pulse
+    if not wasGunPulse1 and gpio.input(pin_isGun1) == 0:
+        mask = 0b01
+        wasGunPulse1 = True
+    if not wasGunPulse2 and gpio.input(pin_isGun2) == 0:
+        mask = mask | 0b10
+        wasGunPulse2 = True
+        
+    if mask != 0:
+        return mask
+    
+    # debounce switch 1 
+    if gpio.input(pin_isGun1on) == 0:
+        # while switch is on, restart timer
+        gunTime1 = time.processTime()   
+    else:
+        # switch must be off some time (debounce)
+        delta = time.processTime() - gunTime1
+        if delta > debounceGunTime:
+            wasGunPulse1 = False
+            
+    # debounce switch 2
+    if gpio.input(pin_isGun2on) == 0:
+        # while switch is on, restart timer
+        gunTime2 = time.processTime()   
+    else:
+        # switch must be off some time (debounce)
+        delta = time.processTime() - gunTime2
+        if delta > debounceGunTime:
+            wasGunPulse2 = False
+
+    return 0
+        
 
 
 def drawVector(x0, y0, x1, y1):
@@ -153,6 +230,7 @@ def drawCircle(x0, y0, r):
         drawVector(x1, y1, x2, y2)
         x1 = x2
         y1 = y2
+
 """ 
     7-segment Charactor Generator
 """
@@ -480,6 +558,8 @@ gpio.output(pin_doDraw, 0)
 gpio.setup(pin_isKey, gpio.IN, pull_up_down=gpio.PUD_UP)
 gpio.setup(pin_isGun1, gpio.IN, pull_up_down=gpio.PUD_UP)
 gpio.setup(pin_isGun2, gpio.IN, pull_up_down=gpio.PUD_UP)
+gpio.setup(pin_isGun1on, gpio.IN, pull_up_down=gpio.PUD_UP)
+gpio.setup(pin_isGun2on, gpio.IN, pull_up_down=gpio.PUD_UP)
 gpio.setup(pin_enZ1, gpio.OUT)
 gpio.setup(pin_enZ2, gpio.OUT)
 # temp: enable both
