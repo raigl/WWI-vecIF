@@ -17,7 +17,7 @@ import math
 import random
 
 #
-version = "0.1e"
+version = "0.1g"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -174,16 +174,12 @@ def drawVector(x0, y0, x1, y1):
         if length exceeds the (short) maximum,
         a chain of vectors is used.
     """
-    # maximum move for a short vector at full speed
-    xmaxdist = 0.25    # 0.25 nominal; adjust hardware
-    ymaxdist = 0.25
-    
     # determine distances 
     dx = x1 - x0;
     dy = y1 - y0;
     # required speed, may be larger that +/- 1.0 for long vectors
-    sx = dx / xmaxdist
-    sy = dy / ymaxdist
+    sx = dx * 4.0
+    sy = dy * 4.0
     
     #print(x0, y0, dx, dy, sx, sy)
     
@@ -195,7 +191,7 @@ def drawVector(x0, y0, x1, y1):
     # determine number of segments, at least 1
     xsegs = 1 + math.floor(abs(sx))
     ysegs = 1 + math.floor(abs(sy))
-    segs = max(xsegs, ysegs)
+    segs = min( max(xsegs, ysegs), 8)
 
     # reduce distance and speed by number of segments
     dx = dx / segs;
@@ -237,22 +233,23 @@ def drawCircle(x0, y0, r):
 """ 
     7-segment Charactor Generator
 """
- 
-chardelta = 50.0 / 1024.0;
-mvxtab = [ 0, chardelta, 0, -chardelta, 0, chardelta, 0];
-mvytab = [ -chardelta, 0, chardelta, 0, chardelta, 0, -chardelta]
+# nominal size is 7.0 and 8.5, but not for small screens
+chardeltax = 7.0 / 1024.0;
+chardeltay = 8.5 / 1024.0;
+mvxtab = [ 0.0, chardeltax, 0.0, -chardeltax, 0.0, chardeltax, 0.0];
+mvytab = [ -chardeltay, 0, chardeltay, 0, chardeltay, 0, -chardeltay]
 digits = [ 0b1110111, 0b0010001, 0b1101011, 0b0111011, 0b0011101,
                     0b0111110, 0b1111110, 0b0010011, 0b1111111, 0b0111111  ]
                     
-def drawCharacter(x0, y0, segs) :
+def drawCharacter(x0, y0, segs, enlarge=3.0) :
     
     mask = 0x40;
     x1 = x0;
     y1 = y0;
     
     for i in range(0, 7):
-        x2 = x1 + mvxtab[i];
-        y2 = y1 + mvytab[i];
+        x2 = x1 + mvxtab[i]*enlarge;
+        y2 = y1 + mvytab[i]*enlarge;
 
         if mask & segs:
             drawVector(x1, y1, x2, y2);
@@ -510,6 +507,9 @@ def loop():
     mode = 1
     omode = mode
     while True:
+        drawCharacter(0.5, 0, digits[8])
+        drawCharacter(-0.5, 0, digits[0])
+        continue;
         if mode > 9:
              mode = 1
         if mode < 1:
@@ -573,7 +573,7 @@ gpio.output(pin_enZ2, 0)
 spi = spidev.SpiDev()
 spi.open(0, 0)
 #spi.max_speed_hz = 4000000
-
+ 
 # run the main loop
 try:
     loop()
