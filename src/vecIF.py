@@ -17,7 +17,7 @@ import math
 import random
 
 #
-version = "0.1g"
+version = "0.1h"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -58,8 +58,24 @@ def setDA(n, val):
     
     
 move_delay = 30.0E-6
-draw_delay = 60.0E-6
+draw_delay = 55.0E-6
 
+def movePoint(posx, posy):
+    # move to destination
+    setDA(0, posx)
+    setDA(1, posy)
+    gpio.output(pin_doMove, 1)
+    time.sleep(move_delay)
+    gpio.output(pin_doMove, 0)
+                        
+def drawSegment(speedx, speedy):		
+    # set speed
+    setDA(0, speedx)
+    setDA(1, speedy)
+    gpio.output(pin_doDraw, 1)
+    time.sleep(draw_delay)
+    gpio.output(pin_doDraw, 0)
+ 
 wasPoint = False        # true after a point drawing
 
 def drawSmallVector(posx, posy, speedx, speedy):
@@ -71,19 +87,8 @@ def drawSmallVector(posx, posy, speedx, speedy):
         with maximum speed, it draws 1/8 of the screen width.
         To draw a point, use zero speeds
     """
-    # move to destination
-    setDA(0, posx)
-    setDA(1, posy)
-    gpio.output(pin_doMove, 1)
-    time.sleep(move_delay)
-    gpio.output(pin_doMove, 0)
-    
-    # set speed
-    setDA(0, speedx)
-    setDA(1, speedy)
-    gpio.output(pin_doDraw, 1)
-    time.sleep(draw_delay)
-    gpio.output(pin_doDraw, 0)
+    movePoint(posx, posy)
+    drawSegment(speedx, speedy)
 
     # reset point drawing flag
     global wasPoint
@@ -215,21 +220,27 @@ def drawCircle(x0, y0, r):
     Draw a circle with center at (x,y) and radius r.
     TODO: properly truncate at border
     """
-    # number of vectors: 30 for radius 1.0
-    points = int( 30.0 * r)
+    # number of points
+    points = int( 36.0 * r)
     # use a minimum of points
-    points = max(8, points)
+    points = max(12, points)
 
-    x1 = x0;
-    y1 = y0 + r;
+    x1 = x0
+    y1 = y0 + r
+    #movePoint(x1, y1)
     for i in range(1, points+1):
+        if i % 6 == 1:
+            movePoint(x1, y1)
         t = math.radians(i * 360/points)
-        x2 = x0+r*math.sin(t)
-        y2 = y0+r*math.cos(t)
-        drawVector(x1, y1, x2, y2)
+        x2 = x0 + r*math.sin(t)
+        y2 = y0 + r*math.cos(t)
+        dx = x2 - x1
+        dy = y2 - y1
+        drawSegment(4.1*dx, 4.1*dy)
         x1 = x2
         y1 = y2
-
+            
+ 
 """ 
     7-segment Charactor Generator
 """
@@ -237,26 +248,34 @@ def drawCircle(x0, y0, r):
 chardeltax = 7.0 / 1024.0;
 chardeltay = 8.5 / 1024.0;
 mvxtab = [ 0.0, chardeltax, 0.0, -chardeltax, 0.0, chardeltax, 0.0];
-mvytab = [ -chardeltay, 0, chardeltay, 0, chardeltay, 0, -chardeltay]
+mvytab = [ -chardeltay, 0.0, chardeltay, 0.0, chardeltay, 0.0, -chardeltay]
 digits = [ 0b1110111, 0b0010001, 0b1101011, 0b0111011, 0b0011101,
                     0b0111110, 0b1111110, 0b0010011, 0b1111111, 0b0111111  ]
                     
-def drawCharacter(x0, y0, segs, enlarge=3.0) :
+def drawCharacter(x0, y0, segs, enlarge=4.0) :
     
     mask = 0x40;
     x1 = x0;
     y1 = y0;
-    
+    toMove = True
+    # movePoint(x1, y1)
+    # drawSegment(0,0)
     for i in range(0, 7):
-        x2 = x1 + mvxtab[i]*enlarge;
-        y2 = y1 + mvytab[i]*enlarge;
-
+        dx = mvxtab[i]*enlarge;
+        dy = mvytab[i]*enlarge;
         if mask & segs:
-            drawVector(x1, y1, x2, y2);
-
+            if toMove:
+                movePoint(x1, y1)
+                toMove = False
+            drawSegment(4*dx, 4*dy)
+        else:
+            toMove = True
+        x1 += dx
+        y1 += dy
         mask = mask >> 1;
-        x1 = x2;
-        y1 = y2;
+        
+    global wasPoint
+    wasPoint = False
 
 
 """ Give navigation point bottom left and right
@@ -475,6 +494,7 @@ def do_rocket(mode) :
 
 
 def show_circles():
+    drawPoint(0, 0)
     drawCircle(0, 0, 0.9)
     drawCircle(0.5, 0.5, 0.2)
     #drawCircle(0.5, 0.5, 0.6)
@@ -504,12 +524,12 @@ def fig1():
     return rc
  
 def loop():
-    mode = 1
+    mode = 2
     omode = mode
     while True:
-        drawCharacter(0.5, 0, digits[8])
-        drawCharacter(-0.5, 0, digits[0])
-        continue;
+        #drawCharacter(0, 0, digits[8])
+        #drawCharacter(-0.5, 0, digits[0])
+        #continue;
         if mode > 9:
              mode = 1
         if mode < 1:
@@ -552,7 +572,6 @@ print("Version " + version)
 # time of compilation -- how?
 
 # use global variables for gpio and spi
-
 # initialize
 gpio.setmode(gpio.BCM)
 gpio.setup(pin_doMove, gpio.OUT)
