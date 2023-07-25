@@ -17,7 +17,7 @@ import math
 import random
 
 #
-version = "0.1e"
+version = "0.1i"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -57,9 +57,36 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 30.0E-6
-draw_delay = 60.0E-6
+move_delay = 25   # .0E-6
+draw_delay = 55   # .0E-6
+ 
+def delay_us(duration):
+    stop = time.perf_counter_ns() + 1000 * duration
+    while time.perf_counter_ns() < stop:
+        time.sleep(0)
+        
+ 
+ 
+ 
 
+def movePoint(posx, posy):
+    # move to destination
+    setDA(0, posx)
+    setDA(1, posy)
+    gpio.output(pin_doMove, 1)
+    delay_us(move_delay)
+    #time.sleep(move_delay*1e-6)
+    gpio.output(pin_doMove, 0)
+                        
+def drawSegment(speedx, speedy):		
+    # set speed
+    setDA(0, speedx)
+    setDA(1, speedy)
+    gpio.output(pin_doDraw, 1)
+    delay_us(draw_delay)
+    #time.sleep(draw_delay * 1e-6)
+    gpio.output(pin_doDraw, 0)
+ 
 wasPoint = False        # true after a point drawing
 
 def drawSmallVector(posx, posy, speedx, speedy):
@@ -71,19 +98,8 @@ def drawSmallVector(posx, posy, speedx, speedy):
         with maximum speed, it draws 1/8 of the screen width.
         To draw a point, use zero speeds
     """
-    # move to destination
-    setDA(0, posx)
-    setDA(1, posy)
-    gpio.output(pin_doMove, 1)
-    time.sleep(move_delay)
-    gpio.output(pin_doMove, 0)
-    
-    # set speed
-    setDA(0, speedx)
-    setDA(1, speedy)
-    gpio.output(pin_doDraw, 1)
-    time.sleep(draw_delay)
-    gpio.output(pin_doDraw, 0)
+    movePoint(posx, posy)
+    drawSegment(speedx, speedy)
 
     # reset point drawing flag
     global wasPoint
@@ -172,22 +188,19 @@ def getLightGuns():
 def drawVector(x0, y0, x1, y1):
     """ General vector drawing
         if length exceeds the (short) maximum,
-        a chain of vectors is used.
+        a chain of segments is used without repostioning;
+        however, to ensure accurate length,
+        after half the way the vector is drawn
+        from the end.
     """
-    # maximum move for a short vector at full speed
-    xmaxdist = 0.25    # 0.25 nominal; adjust hardware
-    ymaxdist = 0.25
-    
     # determine distances 
     dx = x1 - x0;
     dy = y1 - y0;
     # required speed, may be larger that +/- 1.0 for long vectors
-    sx = dx / xmaxdist
-    sy = dy / ymaxdist
+    sx = dx * 4.05				# more than 4.0 to avoid gaps
+    sy = dy * 4.05
     
-    #print(x0, y0, dx, dy, sx, sy)
-    
-    # might be a short vector, then draw now
+    # might be a short vector, then draw now (helps debugging)
     if abs(sx) <= 1.0 and abs(sy) <= 1.0 :
        drawSmallVector(x0, y0, sx, sy)
        return
@@ -196,82 +209,96 @@ def drawVector(x0, y0, x1, y1):
     xsegs = 1 + math.floor(abs(sx))
     ysegs = 1 + math.floor(abs(sy))
     segs = max(xsegs, ysegs)
-
-    # reduce distance and speed by number of segments
-    dx = dx / segs;
-    dy = dy / segs;
+    # make it even number to switch exacly at the middle
+    if segs % 2 == 1:
+        segs += 1
+    # reduce speed by number of segments
     sx = sx / segs;
     sy = sy / segs;
-    
-    # loop 
-    #print(segs, x0, y0, sx, sy)
-    while (segs > 0):
-        drawSmallVector(x0, y0, sx, sy)
-        # advance starting point by speed
-        x0 += dx;
-        y0 += dy; 
-        # next segment 
-        segs -= 1
-        
+ 
+    # start the chain
+    movePoint(x0, y0)
+    for i in range(0, segs):
+        # half way from the end go backwards
+        if i == segs / 2:
+            movePoint(x1, y1)
+            sx = -sx
+            sy = -sy
+        drawSegment(sx, sy)
 
 def drawCircle(x0, y0, r):
     """
     Draw a circle with center at (x,y) and radius r.
     TODO: properly truncate at border
     """
-    # number of vectors: 30 for radius 1.0
-    points = int( 30.0 * r)
+    # number of points
+    points = int( 36.0 * r)
     # use a minimum of points
-    points = max(8, points)
+    points = max(12, points)
 
-    x1 = x0;
-    y1 = y0 + r;
+    x1 = x0
+    y1 = y0 + r
+    #movePoint(x1, y1)
     for i in range(1, points+1):
+        if i % 6 == 1:
+            movePoint(x1, y1)
         t = math.radians(i * 360/points)
-        x2 = x0+r*math.sin(t)
-        y2 = y0+r*math.cos(t)
-        drawVector(x1, y1, x2, y2)
+        x2 = x0 + r*math.sin(t)
+        y2 = y0 + r*math.cos(t)
+        dx = x2 - x1
+        dy = y2 - y1
+        drawSegment(4.1*dx, 4.1*dy)
         x1 = x2
         y1 = y2
-
+            
+ 
 """ 
     7-segment Charactor Generator
 """
- 
-chardelta = 50.0 / 1024.0;
-mvxtab = [ 0, chardelta, 0, -chardelta, 0, chardelta, 0];
-mvytab = [ -chardelta, 0, chardelta, 0, chardelta, 0, -chardelta]
+# nominal size is 7.0 and 8.5, but not for small screens
+chardeltax = 7.0 / 1024.0;
+chardeltay = 8.5 / 1024.0;
+mvxtab = [ 0.0, chardeltax, 0.0, -chardeltax, 0.0, chardeltax, 0.0];
+mvytab = [ -chardeltay, 0.0, chardeltay, 0.0, chardeltay, 0.0, -chardeltay]
 digits = [ 0b1110111, 0b0010001, 0b1101011, 0b0111011, 0b0011101,
                     0b0111110, 0b1111110, 0b0010011, 0b1111111, 0b0111111  ]
                     
-def drawCharacter(x0, y0, segs) :
+def drawCharacter(x0, y0, segs, enlarge=4.0) :
     
     mask = 0x40;
     x1 = x0;
     y1 = y0;
-    
+    toMove = True
+    # movePoint(x1, y1)
+    # drawSegment(0,0)
     for i in range(0, 7):
-        x2 = x1 + mvxtab[i];
-        y2 = y1 + mvytab[i];
-
+        dx = mvxtab[i]*enlarge;
+        dy = mvytab[i]*enlarge;
         if mask & segs:
-            drawVector(x1, y1, x2, y2);
-
+            if toMove:
+                movePoint(x1, y1)
+                toMove = False
+            drawSegment(4*dx, 4*dy)
+        else:
+            toMove = True
+        x1 += dx
+        y1 += dy
         mask = mask >> 1;
-        x1 = x2;
-        y1 = y2;
+    
+    global wasPoint
+    wasPoint = False
 
 
 """ Give navigation point bottom left and right
     need to wait until gun is no longer active
 """
 def navi():
-    drawPoint(-0.9, -0.9)
+    drawPoint(-0.9, -0.8)
     if getLightGuns():
         # time.sleep(0.5)
         return -1
         
-    drawPoint(0.9, -0.9)
+    drawPoint(0.9, -0.8)
     if getLightGuns():
         # time.sleep(0.5)
         return +1
@@ -282,6 +309,7 @@ def navi():
     Bouncing ball 
     The ground line is either shown with points (mode = 1)
     or as a a (long) vector for each point (mode=2)
+    Not yet with hole..
 """
 def show_bounce(mode) :
   
@@ -416,7 +444,7 @@ def do_rocket(mode) :
 
     
     # main loop: accelerate while fuel, show fuel and speed
-    cnt = 1000
+    cnt = 99
     while ypos >= -0.1 and ypos < 1.0 and xpos < 1.0 :
         speed = math.sqrt(xspeed*xspeed + yspeed*yspeed)
         cnt += 1
@@ -439,7 +467,7 @@ def do_rocket(mode) :
         # always actual point and base line
         drawPoint(xpos, ypos)
         drawVector(-1.0, 0.0, 1.0, 0.0)
-        drawCharacter(0.0, -0.8, digits[mode])
+        #drawCharacter(0.0, -0.8, digits[mode])
 
         # show fuel as bar at the left side
         if fuel > 0.0:
@@ -456,8 +484,8 @@ def do_rocket(mode) :
         fueli = int(fuel*100)
         speedi = int(speed*1000)
  
-        # mode 1 and 2:
-        if mode == 1 or mode == 2 :
+        # mode 1 and 2: show fuel, skip to reduce visible luminance
+        if cnt == 1 and (mode == 1 or mode == 2) :
            drawCharacter(-0.9, -0.3, digits[fueli // 10])
            drawCharacter(-0.8, -0.3, digits[fueli % 10])
            drawCharacter(0.8, -0.3, digits[speedi // 10])
@@ -478,6 +506,7 @@ def do_rocket(mode) :
 
 
 def show_circles():
+    drawPoint(0, 0)
     drawCircle(0, 0, 0.9)
     drawCircle(0.5, 0.5, 0.2)
     #drawCircle(0.5, 0.5, 0.6)
@@ -510,6 +539,9 @@ def loop():
     mode = 1
     omode = mode
     while True:
+        #drawCharacter(0, 0, digits[8])
+        #drawCharacter(-0.5, 0, digits[1])
+        #continue;
         if mode > 9:
              mode = 1
         if mode < 1:
@@ -552,7 +584,6 @@ print("Version " + version)
 # time of compilation -- how?
 
 # use global variables for gpio and spi
-
 # initialize
 gpio.setmode(gpio.BCM)
 gpio.setup(pin_doMove, gpio.OUT)
@@ -573,7 +604,7 @@ gpio.output(pin_enZ2, 0)
 spi = spidev.SpiDev()
 spi.open(0, 0)
 #spi.max_speed_hz = 4000000
-
+ 
 # run the main loop
 try:
     loop()
