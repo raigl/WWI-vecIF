@@ -17,7 +17,7 @@ import math
 import random
 
 #
-version = "0.1h"
+version = "0.1i"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -188,18 +188,19 @@ def getLightGuns():
 def drawVector(x0, y0, x1, y1):
     """ General vector drawing
         if length exceeds the (short) maximum,
-        a chain of vectors is used.
+        a chain of segments is used without repostioning;
+        however, to ensure accurate length,
+        after half the way the vector is drawn
+        from the end.
     """
     # determine distances 
     dx = x1 - x0;
     dy = y1 - y0;
     # required speed, may be larger that +/- 1.0 for long vectors
-    sx = dx * 4.0
-    sy = dy * 4.0
+    sx = dx * 4.05				# more than 4.0 to avoid gaps
+    sy = dy * 4.05
     
-    #print(x0, y0, dx, dy, sx, sy)
-    
-    # might be a short vector, then draw now
+    # might be a short vector, then draw now (helps debugging)
     if abs(sx) <= 1.0 and abs(sy) <= 1.0 :
        drawSmallVector(x0, y0, sx, sy)
        return
@@ -207,24 +208,23 @@ def drawVector(x0, y0, x1, y1):
     # determine number of segments, at least 1
     xsegs = 1 + math.floor(abs(sx))
     ysegs = 1 + math.floor(abs(sy))
-    segs = min( max(xsegs, ysegs), 8)
-
-    # reduce distance and speed by number of segments
-    dx = dx / segs;
-    dy = dy / segs;
+    segs = max(xsegs, ysegs)
+    # make it even number to switch exacly at the middle
+    if segs % 2 == 1:
+        segs += 1
+    # reduce speed by number of segments
     sx = sx / segs;
     sy = sy / segs;
-    
-    # loop 
-    #print(segs, x0, y0, sx, sy)
-    while (segs > 0):
-        drawSmallVector(x0, y0, sx, sy)
-        # advance starting point by speed
-        x0 += dx;
-        y0 += dy; 
-        # next segment 
-        segs -= 1
-        
+ 
+    # start the chain
+    movePoint(x0, y0)
+    for i in range(0, segs):
+        # half way from the end go backwards
+        if i == segs / 2:
+            movePoint(x1, y1)
+            sx = -sx
+            sy = -sy
+        drawSegment(sx, sy)
 
 def drawCircle(x0, y0, r):
     """
@@ -284,7 +284,7 @@ def drawCharacter(x0, y0, segs, enlarge=4.0) :
         x1 += dx
         y1 += dy
         mask = mask >> 1;
-        
+    
     global wasPoint
     wasPoint = False
 
@@ -293,12 +293,12 @@ def drawCharacter(x0, y0, segs, enlarge=4.0) :
     need to wait until gun is no longer active
 """
 def navi():
-    drawPoint(-0.9, -0.9)
+    drawPoint(-0.9, -0.8)
     if getLightGuns():
         # time.sleep(0.5)
         return -1
         
-    drawPoint(0.9, -0.9)
+    drawPoint(0.9, -0.8)
     if getLightGuns():
         # time.sleep(0.5)
         return +1
@@ -309,6 +309,7 @@ def navi():
     Bouncing ball 
     The ground line is either shown with points (mode = 1)
     or as a a (long) vector for each point (mode=2)
+    Not yet with hole..
 """
 def show_bounce(mode) :
   
@@ -443,7 +444,7 @@ def do_rocket(mode) :
 
     
     # main loop: accelerate while fuel, show fuel and speed
-    cnt = 1000
+    cnt = 99
     while ypos >= -0.1 and ypos < 1.0 and xpos < 1.0 :
         speed = math.sqrt(xspeed*xspeed + yspeed*yspeed)
         cnt += 1
@@ -466,7 +467,7 @@ def do_rocket(mode) :
         # always actual point and base line
         drawPoint(xpos, ypos)
         drawVector(-1.0, 0.0, 1.0, 0.0)
-        drawCharacter(0.0, -0.8, digits[mode])
+        #drawCharacter(0.0, -0.8, digits[mode])
 
         # show fuel as bar at the left side
         if fuel > 0.0:
@@ -483,8 +484,8 @@ def do_rocket(mode) :
         fueli = int(fuel*100)
         speedi = int(speed*1000)
  
-        # mode 1 and 2:
-        if mode == 1 or mode == 2 :
+        # mode 1 and 2: show fuel, skip to reduce visible luminance
+        if cnt == 1 and (mode == 1 or mode == 2) :
            drawCharacter(-0.9, -0.3, digits[fueli // 10])
            drawCharacter(-0.8, -0.3, digits[fueli % 10])
            drawCharacter(0.8, -0.3, digits[speedi // 10])
@@ -535,7 +536,7 @@ def fig1():
     return rc
  
 def loop():
-    mode = 2
+    mode = 1
     omode = mode
     while True:
         #drawCharacter(0, 0, digits[8])
