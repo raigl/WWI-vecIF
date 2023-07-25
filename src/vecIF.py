@@ -57,15 +57,25 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 30.0E-6
-draw_delay = 55.0E-6
+move_delay = 25   # .0E-6
+draw_delay = 55   # .0E-6
+ 
+def delay_us(duration):
+    stop = time.perf_counter_ns() + 1000 * duration
+    while time.perf_counter_ns() < stop:
+        time.sleep(0)
+        
+ 
+ 
+ 
 
 def movePoint(posx, posy):
     # move to destination
     setDA(0, posx)
     setDA(1, posy)
     gpio.output(pin_doMove, 1)
-    time.sleep(move_delay)
+    delay_us(move_delay)
+    #time.sleep(move_delay*1e-6)
     gpio.output(pin_doMove, 0)
                         
 def drawSegment(speedx, speedy):		
@@ -73,7 +83,8 @@ def drawSegment(speedx, speedy):
     setDA(0, speedx)
     setDA(1, speedy)
     gpio.output(pin_doDraw, 1)
-    time.sleep(draw_delay)
+    delay_us(draw_delay)
+    #time.sleep(draw_delay * 1e-6)
     gpio.output(pin_doDraw, 0)
  
 wasPoint = False        # true after a point drawing
@@ -528,7 +539,7 @@ def loop():
     omode = mode
     while True:
         #drawCharacter(0, 0, digits[8])
-        #drawCharacter(-0.5, 0, digits[0])
+        #drawCharacter(-0.5, 0, digits[1])
         #continue;
         if mode > 9:
              mode = 1
