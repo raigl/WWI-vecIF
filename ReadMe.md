@@ -42,10 +42,32 @@ increasing one and decreasing the other gives a reverse stroke.
 The polarity of the z-axis strobe can be selected by a jumper for each channel.
 
 The charcter display function uses a chain of segements to speed up
-writing; this requires a very precise setup of the mid voltage
+writing; this requires a precise setup of the mid voltage
 to 1.023V; otherwise the characters are blurred.
 
+## Displays
 
+To display the vectors, the device must have analog inputs for x/y mode
+and a digital (TTL) input for either blanking or unblanking. 
+Both x/y inputs should use 5V (or 4V) to position the trace
+to a square area filling the screen. 
+
+Displays that work without modifications are:
+- Grundig GO-40Z oszilloscope (with Z-option)
+- Tektronix 1740A oszilloscope 
+- Tektronix 611 storage display unit
+
+The Tektronix 611 can be swiched to non-storage mode and internally wired
+for +/- 1V sensitivity; the cable must contain a voltage divider 1:4.
+
+Several other oscilloscopes have a Z option, but often either require
+at least 20V to blank the trace. Moreover, often the Z input is 
+designed for blanking small parts only, as internally a diode clamps a
+capacitor that transmits the signal.
+
+A Hameg HM512 was succesfully modified by reversing the diode and
+adding internally a small amplifier to obtain larger voltage swing
+from the Z-input. 
 
 
   
