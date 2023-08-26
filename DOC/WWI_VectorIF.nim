@@ -1,8 +1,148 @@
 Whirlwind I Hardware Vector Interface
 
 Author: Rainer Glaschick, Paderborn
-Date: 2023-05-13
-Version: 0.2
+Date: 2023-05-13 2023-08-24
+Version: 0.3x
+
+Revision target
+===============
+For the transition to the revised Interface that will be version 1.0,
+the planned changes are described below. 
+
+Using a display bus and additional drop boards better models the 
+original situation, even if there are currently only two displays useable.
+
+
+Output
+------
+
+Instead of two outputs for X/Y/Z and two connectors for Lightguns,
+a display bus is used:
+- two output lines for X and Y
+- two output lines for Z1 and Z2
+- two input lines for Lightguns
+- +5V and ground.
+- two input user switch lines (open collector).
+
+Standard 14-pin ribbon connectors are used for the bus, 
+with two more ground lines and two unused ones.
+
+For each display, a detached drop board is used, which has two bus connectors:
+The output of the interface board is connected via a cable to a first drop
+board, from there to a second, and so forth. 
+
+X and Y output is &plusmn;3V, with a source impedance of 50Ω.
+In case long coaxial cables are used, the bus should be terminated,
+reducing the level for all drop boards to &plusmn;1.536V.
+
+The Z1 and Z2 outputs are active low standard 5V CMOS (TTL) outputs 
+for intensification. 
+Many Oszilloscopes use a high TTL signal to blank the trace, 
+thus no inversion is needed. 
+
+
+Drop board
+-----------
+
+A drop board has
+- two potentioemeters (10 kΩ) for the X and Y outputs 
+- two (manual) switches to select Z1 or Z2.
+- two (manual) switches to connect the light pen signal
+to one of the light pen lines.
+
+In order to logically OR Z1 and Z2, two schottky diodes driving a 6.8kΩ
+resistor may be sufficient, but this may shorten the length of a vector
+slightly. 
+(The time constant for 100pF load is 0.68µs, which is less than 2%
+of the 50µs strobe signal).
+Usage of a logic IC is recommended, so that the polarity can be
+changed locally.
+
+While two lightguns driving the same line might work and 
+will not damage the system, it is discouraged and undefined.
+
+For the two switch lines, two buttons or switches (or both) are
+provided connecting to ground. Pin connectors are supplied in parallel, if the
+switch is to be placed distancely.  
+
+A special drop board may contain a voltage booster providing 30V from the 5V
+supply to have a larger voltage swing at the Z connctor to the display,
+in particular for older oszilloscopes.
+
+Reference voltage
+-----------
+
+A reference of 1.024V is required for the integrators to define
+the zero speed for displaying points.
+
+The output amplifiers are designed for a 3.3V reference to 
+change the internal 1.024&plusm;1.024V to symmetrical &plusmn;3.076V. 
+
+The board may either use a LP2950-3.3 linear regulator from 5V,
+or use the 3.3V from the Raspi board directly.
+
+For the integrator's 1.024V, either a trim pot of 10k&Omeaga; plus 
+a 22kΩ fixed resistor or a 27kΩ and shorted trimmer may be used.
+
+The output's zero voltage and amplitude is normally not very critical.
+A voltage divider with 12kΩ and 10kΩ is used giving fairly good results.
+Place for two larger resistors, e.g. 100kΩ and 150kΩ, is provided for 
+better results, depending on the accuracy of the 3.3V reference.
+
+
+5V protection
+-------------
+
+A 0.5A fuse is inserted just before the connector to the Raspi.
+Normally more current can be drawn, only limited by the power supply
+(minus the current drawn be the Raspi and connected USB perpherals)
+and the copper tracks on the Raspi.  
+So the drop boards should not used more then 0.4A together,
+i.e. 0.2A or 1W each for two.
+
+Switches
+--------
+
+The standard 4066 CMOS switches actually work fine; the vertical detours
+seen on the TEK 611 have not manifested on the oscilloscopes used so far. 
+And because it is only on the horizontal signal, it might be 
+a hardware problem of the TEK 611,
+Although the datasheet for the 4066 gives gives 50mV crosstalk from the 
+control signal to the data path, it is in the integration path and thus
+will not propagate to the output. 
+Although Analog Devices produces a better chip (ADG431), a change 
+seems currently not justified, as the 4066 is far better available.
+
+
+Intensivation strobe length
+----------------------------
+
+A trim potentiometer will allow to precisely set the strobe length of 
+a vector draw. 
+Note that the starting (negative) slope of the intensivation signal
+must not be delayed, at this would compromise the starting point of the vector.
+
+
+
+Ribbon input connector
+-----------------------
+
+Changed from 26 to 40 pins.
+
+This allows to use additional pins connected to the bus.
+In order to protect the Raspi, the pins are open collector
+with 47kΩ pullups and 3.3V protection zener diodes (1N4728a or BZX84-3V3)
+in a T-configuration of two 470Ω resistors limiting the current
+into a low level output to 7mA, preventing severe damage in many cases. 
+
+                            
+
+
+
+ 
+
+Introduction
+============
 
 To connect a Whirlwind I (WWI) machine (emulated or simulated) to a physical CRT
 not in raster, but in X-Y-Z-mode,
@@ -20,7 +160,7 @@ the vector size is limited to a fraction of the sceen.
 Thus, long vectors must be composed from shorter ones, 
 as to restart at a known location.  
 
-The board can handel two CRT's and lightguns.
+The board can handle two CRT's and lightguns.
 
 The design was inspired by the Vectrex game console, 
 but allows to set a starting point directly. 
@@ -47,7 +187,7 @@ of &plusmn;2.5V. Thus:
 - 3072 is +1.25V.
 
 The duration of the 'doMOVE' signal must be at least 30µs long to have the
-initial value settled, due to the output resitance of the op amp of about 100&Omega;
+initial value settled, due to the output resitance of the op amp of about 100Ω
 to load the 10nF integration capacitor.
 
 It must be inactive again before the draw signal is used.
@@ -61,7 +201,7 @@ i.e. 2047 is zero, which means no change.
 The values of 0 and 4095 mean full speed in decreasing and increasing
 the coordinate voltages.
 
-As the time constant of the integrators is 20k&Omega;*10nF=200µs,
+As the time constant of the integrators is 20kΩ*10nF=200µs,
 a 400µs strobe with maximum speed input (0 or 4097) would be requied
 to move from one border to the other one. 
 Shorter vectors could be drawn either by decreasing the speed voltage
@@ -148,7 +288,7 @@ Lightgun
 The lightgun uses a 3-pin connector with ground, +5V and a single input.
 
 The sensor OPL801-OC can be connected without electronics;
-the input has a pull-up of 4.7k&Omega; to 5V.
+the input has a pull-up of 4.7kΩ to 5V.
 
 As the controlling computer might not be quick enough to catch a short pulse,
 it sets a flipflop which is reset with each new position move.
