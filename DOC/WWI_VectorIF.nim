@@ -44,7 +44,7 @@ thus no inversion is needed.
 Drop board
 -----------
 
-A drop board has
+A drop board has:
 - two potentioemeters (10 kΩ) for the X and Y outputs 
 - two (manual) switches to select Z1 or Z2.
 - two (manual) switches to connect the light pen signal
@@ -76,7 +76,7 @@ A reference of 1.024V is required for the integrators to define
 the zero speed for displaying points.
 
 The output amplifiers are designed for a 3.3V reference to 
-change the internal 1.024&plusm;1.024V to symmetrical &plusmn;3.076V. 
+change the internal 1.024&plusmn;1.024V to symmetrical &plusmn;3.076V. 
 
 The board may either use a LP2950-3.3 linear regulator from 5V,
 or use the 3.3V from the Raspi board directly.

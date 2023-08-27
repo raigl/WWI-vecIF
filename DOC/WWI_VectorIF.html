@@ -11,6 +11,8 @@
 <h1>Revision target</h1>
 <p>For the transition to the revised Interface that will be version 1.0,
 the planned changes are described below. </p>
+<p>Using a display bus and additional drop boards better models the 
+original situation, even if there are currently only two displays useable.</p>
 <h2>Output</h2>
 <p>Instead of two outputs for X/Y/Z and two connectors for Lightguns,
 a display bus is used:</p>
@@ -26,7 +28,7 @@ with two more ground lines and two unused ones.</p>
 <p>For each display, a detached drop board is used, which has two bus connectors:
 The output of the interface board is connected via a cable to a first drop
 board, from there to a second, and so forth. </p>
-<p>X and Y output is &plusmn;3.072V, with a source impedance of 50Ω.
+<p>X and Y output is &plusmn;3V, with a source impedance of 50Ω.
 In case long coaxial cables are used, the bus should be terminated,
 reducing the level for all drop boards to &plusmn;1.536V.</p>
 <p>The Z1 and Z2 outputs are active low standard 5V CMOS (TTL) outputs 
@@ -34,31 +36,33 @@ for intensification.
 Many Oszilloscopes use a high TTL signal to blank the trace, 
 thus no inversion is needed. </p>
 <h2>Drop board</h2>
-<p>A drop board has
-- a potentioemeter (10 kΩ) for the X and Y outputs each.
-- two (manual) switches to select Z1 or Z2.
-- two (manual) switches to connect the light pen signal
-to one of the light pen lines.</p>
+<p>A drop board has:</p>
+<ul>
+<li>two potentioemeters (10 kΩ) for the X and Y outputs </li>
+<li>two (manual) switches to select Z1 or Z2.</li>
+<li>two (manual) switches to connect the light pen signal
+to one of the light pen lines.</li>
+</ul>
 <p>In order to logically OR Z1 and Z2, two schottky diodes driving a 6.8kΩ
-resistor may be used, but this may shorten the length of a vector
+resistor may be sufficient, but this may shorten the length of a vector
 slightly. 
 (The time constant for 100pF load is 0.68&micro;s, which is less than 2%
 of the 50&micro;s strobe signal).
 Usage of a logic IC is recommended, so that the polarity can be
 changed locally.</p>
 <p>While two lightguns driving the same line might work and 
-will not damage the system, it is discouraged and thus undefined.</p>
+will not damage the system, it is discouraged and undefined.</p>
 <p>For the two switch lines, two buttons or switches (or both) are
-provided. Pin connectors are supplied in parallel, if the
+provided connecting to ground. Pin connectors are supplied in parallel, if the
 switch is to be placed distancely.  </p>
-<p>A drop board may contain a voltage booster providing 30V from the 5V
+<p>A special drop board may contain a voltage booster providing 30V from the 5V
 supply to have a larger voltage swing at the Z connctor to the display,
 in particular for older oszilloscopes.</p>
 <h2>Reference voltage</h2>
 <p>A reference of 1.024V is required for the integrators to define
 the zero speed for displaying points.</p>
 <p>The output amplifiers are designed for a 3.3V reference to 
-change the internal 1.024&plusm;1.024V to symmetrical &plusmn;3.076V. </p>
+change the internal 1.024&plusmn;1.024V to symmetrical &plusmn;3.076V. </p>
 <p>The board may either use a LP2950-3.3 linear regulator from 5V,
 or use the 3.3V from the Raspi board directly.</p>
 <p>For the integrator's 1.024V, either a trim pot of 10k&Omeaga; plus 
