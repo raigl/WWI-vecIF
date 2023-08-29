@@ -4,60 +4,94 @@
 <title>Whirlwind I Hardware Vector Interface</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="author" content="Rainer Glaschick, Paderborn">
+<style type="text/css" media="all">
+.over {text-decoration: overline;}
+</style>
 </head><body>
 <h1 align=center>Whirlwind I Hardware Vector Interface</h1>
 <p align=center>Rainer Glaschick, Paderborn<br>
-2023-05-13 2023-08-24</p>
+2023-05-13 2023-08-29</p>
 <h1>Revision target</h1>
 <p>For the transition to the revised Interface that will be version 1.0,
 the planned changes are described below. </p>
-<p>Using a display bus and additional drop boards better models the 
+<p>Using a display bus and additional tap boards better models the 
 original situation, even if there are currently only two displays useable.</p>
+<p>In any case, the selection of the output intensification is done
+via switches on (or connected to) the tap boards (and not per software).</p>
+<p>To have a bank of switches and LEDs, the I²C bus is available on a second
+connector (4 pins). </p>
 <h2>Output</h2>
 <p>Instead of two outputs for X/Y/Z and two connectors for Lightguns,
-a display bus is used:</p>
+a display bus is used with tap boards. 
+The number of pins depends on the amount of logic in the tap boards 
+and corresponding flexibility.</p>
+<p>In case that rugged connections with proper (round, not ribbon) cables
+are required, use of the common 15-pin D-SUB connectors is proposed
+using these lines:</p>
 <ul>
-<li>two output lines for X and Y</li>
-<li>two output lines for Z1 and Z2</li>
-<li>two input lines for Lightguns</li>
-<li>+5V and ground.</li>
-<li>two input user switch lines (open collector).</li>
+<li>X, Y </li>
+<li>Z1, Z2  </li>
+<li>L1, L2</li>
+<li>+5V</li>
+<li>GPIO27 (Push-Button)</li>
+<li>GPIO5, GPIO6, GPIO20, GPIO21</li>
+<li>3x GND</li>
 </ul>
-<p>Standard 14-pin ribbon connectors are used for the bus, 
-with two more ground lines and two unused ones.</p>
-<p>For each display, a detached drop board is used, which has two bus connectors:
-The output of the interface board is connected via a cable to a first drop
-board, from there to a second, and so forth. </p>
-<p>X and Y output is &plusmn;3V, with a source impedance of 50Ω.
-In case long coaxial cables are used, the bus should be terminated,
-reducing the level for all drop boards to &plusmn;1.536V.</p>
-<p>The Z1 and Z2 outputs are active low standard 5V CMOS (TTL) outputs 
-for intensification. 
-Many Oszilloscopes use a high TTL signal to blank the trace, 
-thus no inversion is needed. </p>
-<h2>Drop board</h2>
-<p>A drop board has:</p>
+<p>Inversion of the intensification signals Z1 and Z2 is provided
+on the tap boards, as this uses only two MOS-FETs (and a switch).</p>
+<p>The GPIO27 is the same as the key on the interface and may be connected
+to ground by a momentary push button on the tap board. 
+No LEDs should be connected to this button.
+Preferred use is as exit if pressed more than 1 sec (software feature).</p>
+<p>The other four GPIO lines are logically open-collector lines that can sink
+upto 2mA each. 
+If grounded by a switch (or key), software can determine the low state
+(which also lights the LED) and act accordingly.</p>
+<p>All GPIO-lines have pullup resistors of 15k (5V) and 10k (3.3V) 
+and are bidirectional converted from 3.3V to 5V, see NXP AN10441.</p>
+<p>As a soldering option, instead of GPIO20 and GPIO21, the inverted
+intensification signals may be used, as this is just a layout option.</p>
+<p>If a smaller connector is desired, a 9 pin D-Sub may be used;
+the pin layout provides X, Y, Z1, Z2, L1, L2, 5V and 2x ground,
+thus no keys or lamps and no inverted intensification.</p>
+<p>On the board, a 2.54mm 2x8 pin header for ribbon connectors is used,
+pin 16 unused.  </p>
+<h2>Tap board</h2>
+<p>A tap board has at least:</p>
 <ul>
-<li>two potentioemeters (10 kΩ) for the X and Y outputs </li>
-<li>two (manual) switches to select Z1 or Z2.</li>
-<li>two (manual) switches to connect the light pen signal
-to one of the light pen lines.</li>
+<li>two trim potentioemeters (10 kΩ) for the X and Y outputs </li>
+<li>two (manual) switches to select Z1 or Z2 or both.</li>
+<li>one light gun connection</li>
+<li>one pushbutton </li>
+<li>four switches with LEDs</li>
 </ul>
-<p>In order to logically OR Z1 and Z2, two schottky diodes driving a 6.8kΩ
-resistor may be sufficient, but this may shorten the length of a vector
-slightly. 
-(The time constant for 100pF load is 0.68&micro;s, which is less than 2%
+<p>To select both, Z1 and Z2, schottky diodes driving a 6.8kΩ resistor 
+should work well, although (short) vectors and character segments
+might be slightly shortened. 
+In that case, CMOS invertes should be used.
+(The time constant for a 100pF load is 0.68&micro;s, which is less than 2%
 of the 50&micro;s strobe signal).
-Usage of a logic IC is recommended, so that the polarity can be
-changed locally.</p>
-<p>While two lightguns driving the same line might work and 
-will not damage the system, it is discouraged and undefined.</p>
-<p>For the two switch lines, two buttons or switches (or both) are
-provided connecting to ground. Pin connectors are supplied in parallel, if the
-switch is to be placed distancely.  </p>
-<p>A special drop board may contain a voltage booster providing 30V from the 5V
-supply to have a larger voltage swing at the Z connctor to the display,
-in particular for older oszilloscopes.</p>
+Another configuration switch (not to be used during normal operation)
+inverts the intensification signal. </p>
+<p>The pushbutton and the switches are described in the previous section.</p>
+<p>While two lightguns driving the same line will not damage the system, 
+a configuration jumper should be used to select the light gun input line,
+not a switch to change it while in operation. </p>
+<p>A special tap board may contain a voltage booster providing 30V from the 5V
+supply to have a larger voltage swing at the Z connector to the display,
+in particular for older oscilloscopes.</p>
+<h2>I²C Bus</h2>
+<p>By providing the I²C bus on a connector of its own,
+a bank of panel switches and lights may be connected.
+Upto 8 PCF 8574 port expanders for 8 lamps or switches may
+be used. </p>
+<p>As with the tap board, the outputs of the port expander
+are open-drain, here with a dynamic and static pullup. </p>
+<p>So each line will lighten the lamp if connected to ground,
+and either the user or the computer can connect to ground (and light the lamp).</p>
+<p>It the computer wants to find out the switches, it would temporarily
+switch all off and see which ones are still on.
+Same procedure for the user. </p>
 <h2>Reference voltage</h2>
 <p>A reference of 1.024V is required for the integrators to define
 the zero speed for displaying points.</p>
@@ -65,8 +99,8 @@ the zero speed for displaying points.</p>
 change the internal 1.024&plusmn;1.024V to symmetrical &plusmn;3.076V. </p>
 <p>The board may either use a LP2950-3.3 linear regulator from 5V,
 or use the 3.3V from the Raspi board directly.</p>
-<p>For the integrator's 1.024V, either a trim pot of 10k&Omeaga; plus 
-a 22kΩ fixed resistor or a 27kΩ and shorted trimmer may be used.</p>
+<p>For the integrator's 1.024V, either a trim pot is used to calibrate
+the voltage.</p>
 <p>The output's zero voltage and amplitude is normally not very critical.
 A voltage divider with 12kΩ and 10kΩ is used giving fairly good results.
 Place for two larger resistors, e.g. 100kΩ and 150kΩ, is provided for 
@@ -76,9 +110,9 @@ better results, depending on the accuracy of the 3.3V reference.</p>
 Normally more current can be drawn, only limited by the power supply
 (minus the current drawn be the Raspi and connected USB perpherals)
 and the copper tracks on the Raspi.  
-So the drop boards should not used more then 0.4A together,
+So the tap boards should not use more then 0.4A together,
 i.e. 0.2A or 1W each for two.</p>
-<h2>Switches</h2>
+<h2>Integrator switches</h2>
 <p>The standard 4066 CMOS switches actually work fine; the vertical detours
 seen on the TEK 611 have not manifested on the oscilloscopes used so far. 
 And because it is only on the horizontal signal, it might be 
@@ -92,14 +126,12 @@ seems currently not justified, as the 4066 is far better available.</p>
 <p>A trim potentiometer will allow to precisely set the strobe length of 
 a vector draw. 
 Note that the starting (negative) slope of the intensivation signal
-must not be delayed, at this would compromise the starting point of the vector.</p>
+must not be delayed, at this would compromise the starting point of the vector,
+in particular the stroke of a character.</p>
+<p>Drawing points is not affected. </p>
 <h2>Ribbon input connector</h2>
 <p>Changed from 26 to 40 pins.</p>
-<p>This allows to use additional pins connected to the bus.
-In order to protect the Raspi, the pins are open collector
-with 47kΩ pullups and 3.3V protection zener diodes (1N4728a or BZX84-3V3)
-in a T-configuration of two 470Ω resistors limiting the current
-into a low level output to 7mA, preventing severe damage in many cases. </p>
+<p>This allows to use additional pins connected to the bus.</p>
 <h1>Introduction</h1>
 <p>To connect a Whirlwind I (WWI) machine (emulated or simulated) to a physical CRT
 not in raster, but in X-Y-Z-mode,
