@@ -332,7 +332,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "VecCRT.kicad_pro",
+    "filename": "VecCRTswitches.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -385,11 +385,11 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "specctra_dsn": "VecCRT.dsn",
+      "specctra_dsn": "",
       "step": "",
       "vrml": ""
     },
-    "page_layout_descr_file": "/home/rg/SMBdir/eda/sym/rg.kicad_wks"
+    "page_layout_descr_file": ""
   },
   "schematic": {
     "annotate_start_num": 0,
