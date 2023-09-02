@@ -1,5 +1,9 @@
 *~
 *-backups/
 fp-info-cache
-VecCRT.kicad_prl
+*.kicad_prl
 *.zip
+*.dsn
+*.ses
+*.rules
+KiCad/logs/
