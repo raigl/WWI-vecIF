@@ -7,3 +7,4 @@ fp-info-cache
 *.ses
 *.rules
 KiCad/logs/
+*.jpg
