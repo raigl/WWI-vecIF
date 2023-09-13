@@ -117,6 +117,11 @@ Note that the WWI had no console, but was to a large extend controlled
 by panel switches and lights.
   
 
+## 5V only operation
 
+The board can be driven by a 5V Arduino.
+In this case, JP3 must be cut and changed.
+The voltage stablizer U9 (LP 2950-3.3) must be used.
+The 3.3V pins are then supplied with 5V.
  
 
