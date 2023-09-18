@@ -173,7 +173,7 @@ def do_rocket(mode) :
     while ypos >= -0.1 and ypos < 1.0 and xpos < 1.0 :
         speed = math.sqrt(xspeed*xspeed + yspeed*yspeed)
         cnt += 1
-        if cnt > 3:
+        if cnt > 12:
           cnt = 0
           # accelerate if still fuel
           if fuel > 0.0 :
@@ -198,7 +198,7 @@ def do_rocket(mode) :
         if fuel > 0.0:
             base.drawVector(-0.99, 0.0, -0.99, fuel)
         # base.drawPoint(-0.99, fuel)   # show end point
-        
+ 
         
         # mode 0 and 1: 
         if mode == 0 or mode == 1 :
@@ -219,7 +219,7 @@ def do_rocket(mode) :
 
         # mode 2: speed vector 
         if mode == 2 :
-            base.drawVector(xpos, ypos, xpos + 8*xspeed, ypos + 8*yspeed)          
+            base.drawVector(xpos, ypos, xpos + 4*xspeed, ypos + 4*yspeed)
         
         if base.getKeys() > 0:
             time.sleep(0.5)
@@ -298,7 +298,7 @@ def loop():
         if mode == 9:
             mode += do_oxo()
  
-        if base.getKeys() > 0:
+        if 1 == base.getKeys() % 2 :
             mode += 1
             print(mode);
             time.sleep(1.0)

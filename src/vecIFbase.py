@@ -11,7 +11,7 @@ import math
 import random
 
 #
-version = "0.2a"
+version = "0.2c"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -23,6 +23,10 @@ pin_isGun1 = 25
 pin_isGun2 = 24
 pin_isGun1on = 4
 pin_isGun2on = 7
+pin_LED1 = 5
+pin_LED2 = 6
+pin_LED3 = 20
+pin_LED4 = 21
 # SPI pins are defined by SPI interface
 
  
@@ -76,7 +80,22 @@ def drawSegment(speedx, speedy):
     delay_us(draw_delay)
     #time.sleep(draw_delay * 1e-6)
     gpio.output(pin_doDraw, 0)
- 
+    
+def setOutLine(line):
+    """ Enables or disbles output lines
+        Input is a bit pattern, bit 0 for line 1, bit 1 for line 2
+        i.e. 0 for none, 1 for 1, 2 for 2 and 3 for both
+    """
+    if line == 1 or line == 3:
+        gpio.output(pin_enZ1, 0)  # inverted: 0 is enable, 1 is disable
+    else:
+        gpio.output(pin_enZ1, 1)  
+    if line == 2 or line == 3:
+        gpio.output(pin_enZ2, 0)
+    else:
+        gpio.output(pin_enZ2, 1)  
+        
+        
 wasPoint = False        # true after a point drawing
 
 def drawSmallVector(posx, posy, speedx, speedy):
@@ -176,12 +195,37 @@ def getLightGuns():
 def getKeys():
     """ Key inquiry for the push button on the interface board
     and the four switches on the tap board(s).
-    
+    Result in a bit pattern with LSB for the push button
+    and the other four keys, left to right, with 2, 4, 8, and 16.
+    Note that setKeys() can virtually set a key
     """
-    # very preliminary
+    res = 0 
     if gpio.input(pin_isKey) == 0:
-        return 1
-    return 0
+        res = 1
+    if gpio.input(pin_LED1) == 0:
+        res += 2
+    if gpio.input(pin_LED2) == 0:
+        res += 4
+    if gpio.input(pin_LED3) == 0:
+        res += 8
+    if gpio.input(pin_LED4) == 0:
+        res += 16
+        
+    return res
+    
+ 
+def setKey(n, b):
+    """ 
+        Set virtual key (i.e. the LED) on (1) or off (0)
+    """
+    LEDs = [pin_LED1, pin_LED2, pin_LED3, pin_LED4]
+    led = LEDs[n-1]
+    if b == 0:
+        gpio.setup(led, gpio.IN, pull_up_down=gpio.PUD_UP)
+    else:
+        gpio.setup(led, gpio.OUT)
+        gpio.output(led, 0)
+        
         
 def drawVector(x0, y0, x1, y1):
     """ General vector drawing
@@ -304,9 +348,15 @@ def vecIFopen():
     gpio.setup(pin_isGun2on, gpio.IN, pull_up_down=gpio.PUD_UP)
     gpio.setup(pin_enZ1, gpio.OUT)
     gpio.setup(pin_enZ2, gpio.OUT)
-    # temp: enable both
+    #  initially enable both
     gpio.output(pin_enZ1, 0)  # inverted: 0 is enable, 1 is disable
     gpio.output(pin_enZ2, 0)
+    # set all LED / KEY pins pullup high so that the LED are free (off)
+    gpio.setup(pin_LED1, gpio.IN, pull_up_down=gpio.PUD_UP)
+    gpio.setup(pin_LED2, gpio.IN, pull_up_down=gpio.PUD_UP)
+    gpio.setup(pin_LED3, gpio.IN, pull_up_down=gpio.PUD_UP)
+    gpio.setup(pin_LED4, gpio.IN, pull_up_down=gpio.PUD_UP)
+    
 
     spi.open(0, 0)
     spi.max_speed_hz = 4000000

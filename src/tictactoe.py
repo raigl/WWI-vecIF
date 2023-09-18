@@ -68,7 +68,9 @@ def oxo_show(player):
         state = oxo_state[i]
         if state == 0 and winner == 0:  # free
             # need a point for the light gun
+            base.setOutLine(player)
             base.drawPoint(x, y)
+            base.setOutLine(3)
             # if player == base.getLightGuns():
             if 0 < base.getLightGuns():
                 return i
@@ -88,7 +90,9 @@ def oxo_show(player):
     drawNumber(0.4, 0.8, wincount[1])
         
     # restart button
+    base.setOutLine(player)
     base.drawPoint(0.0, 0.8)
+    base.setOutLine(3)
     # if player == base.getLightGuns():
     if 0 < base.getLightGuns():
         winner = 0
@@ -145,7 +149,7 @@ def do_oxo() :
     wincount[1] = 0
         
     # one round
-    while base.getKeys() == 0:   	# until abort
+    while 0 == base.getKeys() & 1:   	# until abort
         hit = oxo_show(player)
         if hit == -2:		# restart
             winner = 0
@@ -168,13 +172,13 @@ def do_oxo() :
     return 0
 
 def loop():
-    while base.getKeys() == 0:
+    while 0 == (base.getKeys() % 2):
+        print(base.getKeys())
         do_oxo()
         # short keypress restarts, long stops
         time.sleep(0.3)
-        if base.getKeys() == 0:
-            continue
-        return		
+        if 1 == (base.getKeys() % 2):
+            return		
 
 # run the main loop
 try:
