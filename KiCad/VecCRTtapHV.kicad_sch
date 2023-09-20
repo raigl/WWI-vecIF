@@ -4091,7 +4091,7 @@
     (in_bom yes) (on_board yes)
     (uuid e81faa2b-80b4-4e8b-af0d-4a14b22fc084)
     (property "Reference" "C4" (id 0) (at 128.27 95.25 0))
-    (property "Value" "10u" (id 1) (at 120.65 95.25 0))
+    (property "Value" "470u" (id 1) (at 120.65 95.25 0))
     (property "Footprint" "RG:C2-7" (id 2) (at 124.46 96.52 0)
       (effects (font (size 1.524 1.524)) hide)
     )
@@ -4277,7 +4277,7 @@
       (reference "C3") (unit 1) (value "1n") (footprint "RG:C2-2")
     )
     (path "/e81faa2b-80b4-4e8b-af0d-4a14b22fc084"
-      (reference "C4") (unit 1) (value "10u") (footprint "RG:C2-7")
+      (reference "C4") (unit 1) (value "470u") (footprint "RG:C2-7")
     )
     (path "/e359ff2d-c7b7-40be-9b2f-63774d5791ca"
       (reference "D1") (unit 1) (value "BAT42") (footprint "RG:D3")

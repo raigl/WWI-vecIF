@@ -402,7 +402,7 @@
       "step": "",
       "vrml": ""
     },
-    "page_layout_descr_file": ""
+    "page_layout_descr_file": "rg.kicad_wks"
   },
   "schematic": {
     "annotate_start_num": 0,
