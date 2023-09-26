@@ -74,7 +74,8 @@ def show_bounce(mode) :
  
         # check for stop
         if base.getKeys() > 0:
-            return 1;
+            #time.sleep(0.2)
+            return 0;
     if (mode == 1):
         # draw a chain of dots
         for i in range(0,100):
@@ -222,8 +223,8 @@ def do_rocket(mode) :
             base.drawVector(xpos, ypos, xpos + 4*xspeed, ypos + 4*yspeed)
         
         if base.getKeys() > 0:
-            time.sleep(0.5)
-            return 1
+            #time.sleep(0.2)
+            return 0
 
         rc = navi()
         if (rc != 0): return rc
@@ -286,6 +287,7 @@ def loop():
         if mode == 5:
             for i in range(0,10):
                 base.drawCharacter(-0.5 + i * 0.1, 0.0, base.digits[i])
+            time.sleep(0.01)
             rc = navi()
             mode += rc
  

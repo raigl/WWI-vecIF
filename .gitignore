@@ -1,5 +1,6 @@
 *~
 *-backups/
+__pycache__/
 fp-info-cache
 *.kicad_prl
 *.zip
@@ -8,3 +9,4 @@ fp-info-cache
 *.rules
 KiCad/logs/
 *.jpg
+ 

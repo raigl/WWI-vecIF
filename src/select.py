@@ -43,13 +43,21 @@ def do_show() :
                 base.setKey(b, i&m)
     
     drawNumber(0, 0.9, int(res/2))
-             
     return res
+        
 
 def loop():
     res = 0
     while 0 == res % 2:
         res = do_show()
+        # activation point
+        base.drawPoint(-0.05, 0.9)
+        if 0 < base.getLightGuns():
+            return int(res/2)
+    # check if
+    print (res)
+    if res == 1:
+        return
     # wait until PB is released		
     while 1 == base.getKeys() % 2:
         time.sleep(0.1)
@@ -71,6 +79,7 @@ try:
     sys.exit(res)
 except KeyboardInterrupt:
     print("Cancelled")
+    sys.exit(127)
 finally:
     base.vecIFclose()
     print("Stopped.")
