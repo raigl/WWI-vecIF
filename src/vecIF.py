@@ -74,7 +74,8 @@ def show_bounce(mode) :
  
         # check for stop
         if base.getKeys() > 0:
-            return 1;
+            #time.sleep(0.2)
+            return 0;
     if (mode == 1):
         # draw a chain of dots
         for i in range(0,100):
@@ -222,8 +223,8 @@ def do_rocket(mode) :
             base.drawVector(xpos, ypos, xpos + 4*xspeed, ypos + 4*yspeed)
         
         if base.getKeys() > 0:
-            time.sleep(0.5)
-            return 1
+            #time.sleep(0.2)
+            return 0
 
         rc = navi()
         if (rc != 0): return rc
@@ -252,7 +253,7 @@ def fig1():
     base.drawVector(0.0, -1.0, 0.0, 1.0)
     base.drawVector(-1.0, 0.0, 1.0, 0.0)
     #base.drawPoint(-0.5, 0.0);
-    #base.drawPoint(0.0, 0.5);
+    #base.drawPoint(0.0, 0.2);
     base.drawVector(-0.2, 0.0, 0.0, 0.2)
     base.drawVector(0.2, 0.0, 0.0, 0.2)
     base.drawVector(-0.5, 0.0, 0.0, -0.5)
@@ -261,7 +262,7 @@ def fig1():
     return rc
  
 def loop():
-    mode = 1
+    mode = 5
     omode = mode
     while True:
         #base.drawCharacter(0, 0, base.digits[8])
@@ -286,6 +287,7 @@ def loop():
         if mode == 5:
             for i in range(0,10):
                 base.drawCharacter(-0.5 + i * 0.1, 0.0, base.digits[i])
+            time.sleep(0.01)
             rc = navi()
             mode += rc
  

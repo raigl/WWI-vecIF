@@ -55,7 +55,7 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 25   # .0E-6
+move_delay = 35   # .0E-6
 draw_delay = 55   # .0E-6
  
 def delay_us(duration):
@@ -261,11 +261,6 @@ def drawVector(x0, y0, x1, y1):
     # start the chain
     movePoint(x0, y0)
     for i in range(0, segs):
-        # half way from the end go backwards
-        if i == segs / 2:
-            movePoint(x1, y1)
-            sx = -sx
-            sy = -sy
         drawSegment(sx, sy)
 
 def drawCircle(x0, y0, r):
@@ -273,23 +268,23 @@ def drawCircle(x0, y0, r):
     Draw a circle with center at (x,y) and radius r.
     TODO: properly truncate at border
     """
-    # number of points
-    points = int( 36.0 * r)
+    # number of points for full circle
+    points = int( 60.0 * r)
     # use a minimum of points
-    points = max(7, points)
+    points = max(8, points)
 
     x1 = x0
     y1 = y0 + r
-    #movePoint(x1, y1)
+    movePoint(x1, y1)
     for i in range(1, points+1):
-        if i % 6 == 1:
-            movePoint(x1, y1)
+        #if i % 6 == 1:
+            #movePoint(x1, y1)
         t = math.radians(i * 360/points)
         x2 = x0 + r*math.sin(t)
         y2 = y0 + r*math.cos(t)
         dx = x2 - x1
         dy = y2 - y1
-        drawSegment(4.1*dx, 4.1*dy)
+        drawSegment(4.0*dx, 4.0*dy)
         x1 = x2
         y1 = y2
             
@@ -318,6 +313,7 @@ def drawCharacter(x0, y0, segs, enlarge=4.0) :
         dy = mvytab[i]*enlarge;
         if mask & segs:
             if toMove:
+                # delay_us(move_delay)
                 movePoint(x1, y1)
                 toMove = False
             drawSegment(4*dx, 4*dy)
