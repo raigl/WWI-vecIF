@@ -253,7 +253,7 @@ def fig1():
     base.drawVector(0.0, -1.0, 0.0, 1.0)
     base.drawVector(-1.0, 0.0, 1.0, 0.0)
     #base.drawPoint(-0.5, 0.0);
-    #base.drawPoint(0.0, 0.5);
+    #base.drawPoint(0.0, 0.2);
     base.drawVector(-0.2, 0.0, 0.0, 0.2)
     base.drawVector(0.2, 0.0, 0.0, 0.2)
     base.drawVector(-0.5, 0.0, 0.0, -0.5)
@@ -262,7 +262,7 @@ def fig1():
     return rc
  
 def loop():
-    mode = 1
+    mode = 5
     omode = mode
     while True:
         #base.drawCharacter(0, 0, base.digits[8])
