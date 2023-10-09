@@ -3,7 +3,7 @@
 For showing a Whirlwind programme's output, a small hardware
 generates vector strokes on X/Y/Z oszilloskopes
 and allows to attach light guns.
-Guy Fedorkow's WWI simulator (https://github.com/raigl/WWI-vecIF) running on a Raspberry (B+) 
+Guy Fedorkow's WWI simulator ([https://github.com/gfedorkow/Whirlwind-Instruction-Simulator]) running on a Raspberry (B+) 
 can drive the interface and run some original WWI programmes.
 
 
