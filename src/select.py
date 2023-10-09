@@ -8,10 +8,14 @@
     If the push button is pressed, this programmed terminates
     with the code selected. 
     
-    The code can also be set with the lightgun selecting one of 16 points;
-    then, the corresponding LEDs are activated.
+    The code can also be set with the lightgun selecting one of 16 points.
+    In normal mode, the programme imediately returns with the code selected.
+    In debug mode, the corresponding LEDs are activated and the push button terminates.
     
-    Result is the bitwise or of the code selected by the lightgun and the keys.
+    Debug mode is switched with the push button in mode 0.
+                                                    
+                
+    Result is the bitwise or of the code selected by the lightgun and/or the keys.
     
 """
 
@@ -24,12 +28,10 @@ def drawNumber(x, y, num):
     base.drawCharacter(x, y, base.digits[num // 10], enlarge=8.0)
     base.drawCharacter(x+0.1, y, base.digits[num % 10], enlarge=8.0)
     
+# show the menu, set LEDs and show the value on top
 def do_show() :
-    
-    # get LEDs
-    res = base.getKeys()
-    
-    # draw pattern for light gun
+    was_gun = False
+    # draw pattern for light gun and set LEDs
     for i in range(0,16):
         x = i % 4
         y = int(i / 4)
@@ -38,26 +40,48 @@ def do_show() :
         drawNumber(x+0.05, y, i)
         base.drawPoint(x, y)
         if 0 < base.getLightGuns():
+            was_gun = True
             for b in [1, 2, 3, 4]:
                 m = 2**(b-1)
                 base.setKey(b, i&m)
-    
+    # get LEDs
+    res = base.getKeys()
+    # show value on top
     drawNumber(0, 0.9, int(res/2))
-    return res
+    return res, was_gun
         
-
+# main loop
 def loop():
     res = 0
-    while 0 == res % 2:
-        res = do_show()
-        # activation point
-        base.drawPoint(-0.05, 0.9)
-        if 0 < base.getLightGuns():
-            return int(res/2)
-    # check if
-    print (res)
-    if res == 1:
-        return
+    mode = 0
+    was_gun = False
+    # update the LEDs
+    while True:
+        # update the LEDs
+        res, was_gun  = do_show()
+        # in normal mode, stop if light gun
+        if mode == 0 and was_gun:
+            break
+        # in debug mode, use activation point
+        if mode != 0:
+            # activation point
+            base.drawPoint(-0.05, 0.9)
+            # check lightgun (last dot drawn)
+            if 0 < base.getLightGuns():
+                   break
+        # check for push button
+        print(res)
+        if 1 == base.getKeys() % 2:
+            if res < 2:
+                mode = (mode + 1 ) % 2
+                # wait for PB off
+                while 1 == base.getKeys() % 2:
+                    time.sleep(0.1)
+            else:
+                break;
+    # loop end, clear LEDs
+    for b in [1, 2, 3, 4]:
+        base.setKey(b, 0)
     # wait until PB is released		
     while 1 == base.getKeys() % 2:
         time.sleep(0.1)
@@ -66,6 +90,8 @@ def loop():
 # run the main loop
 try:
     base.vecIFopen()
+    
+     # wait for key release
     while True:
       for i in [1, 2, 3, 4]:
         base.setKey(i, 1)
@@ -75,20 +101,15 @@ try:
         time.sleep(0.1)
       if 0 == base.getKeys()%2:
         break;
+        
+    # do the menu and exit code returned
     res = loop()
+    print("res=", res)
     sys.exit(res)
+    
 except KeyboardInterrupt:
     print("Cancelled")
     sys.exit(127)
 finally:
     base.vecIFclose()
     print("Stopped.")
- 
- 
- 
- 
- 
- 
- 
- 
- 

@@ -218,6 +218,8 @@ def setKey(n, b):
     """ 
         Set virtual key (i.e. the LED) on (1) or off (0)
     """
+    if n == 0:
+        return			# ignore key 0
     LEDs = [pin_LED1, pin_LED2, pin_LED3, pin_LED4]
     led = LEDs[n-1]
     if b == 0:

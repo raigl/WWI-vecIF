@@ -5,6 +5,7 @@ while true
 do $base/select.py
    rc=$?
    echo rc=$rc
+   pwd
    p="continue"
    case $rc in
       0) continue;;
@@ -18,7 +19,7 @@ do $base/select.py
       8) p="wwsim $code/Vibrating-String/fb131-97-setup-and-run-Annotated.acore";;
       9) p="wwsim $code/Vibrating-String/fc131-204-2-merged-annotated.acore";;
      10) p="wwsim $code/Vibrating-String/fc131-204-6-merged-annotated.acore";;
-     11) p="wwsim $code/Track-While-Scan-D-Israel/annotated-track-while-scan.acore -D -r --CrtF 5 --NoToggl --Ana -c 0 -q";;
+     11) cd $code/Track-While-Scan-D-Israel/; p="wwsim annotated-track-while-scan.acore -D -r --CrtF 5 --NoToggl --Ana -c 0 -q";;
      12) p="wwsim $code/Number-Display/number-display-annotated";;
      15) exit;;
     127) exit;;
