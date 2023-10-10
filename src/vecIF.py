@@ -234,7 +234,15 @@ def do_rocket(mode) :
 def show_circles():
     base.drawPoint(0, 0)
     base.drawCircle(0, 0, 0.9)
+    base.drawCircularPoints(0, 0, 0.9)
     base.drawCircle(0.5, 0.5, 0.2)
+    base.drawPoint(0.495, 0.495)
+    #
+    base.drawPoint(-0.4, -0.4)
+    base.drawCircle(-0.4, -0.4, 0.2)
+    base.drawVector(-0.6, -0.4, -0.2, -0.4)
+    base.drawVector(-0.4, -0.6, -0.4, -0.2);
+    
     #base.drawCircle(0.5, 0.5, 0.6)
     #base.drawVector(1.0, 1.0, 1.0, -1.0)
     #base.drawVector(1.0, 1.0, -1.0, 1.0)
@@ -262,7 +270,8 @@ def fig1():
     return rc
  
 def loop():
-    mode = 1
+    mode = int(base.getKeys()/2)
+    if mode == 0: mode = 1
     omode = mode
     while True:
         #base.drawCharacter(0, 0, base.digits[8])

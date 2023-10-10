@@ -11,7 +11,7 @@ import math
 import random
 
 #
-version = "0.2c"
+version = "0.2e"
 
 # pin definitions in BCM numbering
 pin_doMove = 17
@@ -55,7 +55,7 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 65   # .0E-6
+move_delay = 35   # .0E-6
 draw_delay = 55   # .0E-6
  
 def delay_us(duration):
@@ -271,15 +271,16 @@ def drawCircle(x0, y0, r):
     TODO: properly truncate at border
     """
     # number of points for full circle
-    points = int( 60.0 * r)
+    points = int( 36.0 * r)
     # use a minimum of points
-    points = max(8, points)
+    points = max(12, points)
 
     x1 = x0
     y1 = y0 + r
     movePoint(x1, y1)
     for i in range(1, points+1):
-        #if i % 6 == 1:
+        # enable if circle is not good enough
+        #if i % 6 == 0:
             #movePoint(x1, y1)
         t = math.radians(i * 360/points)
         x2 = x0 + r*math.sin(t)
@@ -287,6 +288,25 @@ def drawCircle(x0, y0, r):
         dx = x2 - x1
         dy = y2 - y1
         drawSegment(4.0*dx, 4.0*dy)
+        x1 = x2
+        y1 = y2
+        
+def drawCircularPoints(x0, y0, r):
+    # number of points for full circle
+    points = int( 36.0 * r)
+    # use a minimum of points
+    points = max(8, points)
+
+    x1 = x0
+    y1 = y0 + r
+    for i in range(1, points+1):
+        t = math.radians(i * 360/points)
+        x2 = x0 + r*math.sin(t)
+        y2 = y0 + r*math.cos(t)
+        dx = x2 - x1
+        dy = y2 - y1
+        # drawSegment(4.0*dx, 4.0*dy)
+        drawPoint(x2, y2)
         x1 = x2
         y1 = y2
             
@@ -308,8 +328,7 @@ def drawCharacter(x0, y0, segs, enlarge=4.0) :
     x1 = x0;
     y1 = y0;
     toMove = True
-    # movePoint(x1, y1)
-    # drawSegment(0,0)
+    movePoint(x1, y1)
     for i in range(0, 7):
         dx = mvxtab[i]*enlarge;
         dy = mvytab[i]*enlarge;
