@@ -73,7 +73,7 @@ def show_bounce(mode) :
         if (rc != 0): return rc
  
         # check for stop
-        if base.getKeys() > 0:
+        if 1 == base.getKeys() % 2:
             #time.sleep(0.2)
             return 0;
     if (mode == 1):
@@ -121,7 +121,7 @@ def do_oxo() :
     for i in range(0, 9):
         oxo_state[i] = random.randrange(3)
         
-    while base.getKeys() == 0:
+    while 0 == base.getKeys() % 2:
         hit = oxo_show()
         if hit >= 0:
             oxo_state[hit] = random.randrange(1, 3)
@@ -222,7 +222,7 @@ def do_rocket(mode) :
         if mode == 2 :
             base.drawVector(xpos, ypos, xpos + 4*xspeed, ypos + 4*yspeed)
         
-        if base.getKeys() > 0:
+        if 1 == base.getKeys() % 2:
             #time.sleep(0.2)
             return 0
 
@@ -262,7 +262,7 @@ def fig1():
     return rc
  
 def loop():
-    mode = 5
+    mode = 1
     omode = mode
     while True:
         #base.drawCharacter(0, 0, base.digits[8])
@@ -304,13 +304,16 @@ def loop():
             mode += 1
             print(mode);
             time.sleep(1.0)
-            if base.getKeys() > 0:
+            if 1 == base.getKeys() % 2:
                 return
         
 
 # run the main loop
 try:
     base.vecIFopen()
+    # ensure PB is released
+    while 1 == base.getKeys() % 2:
+        time.sleep(0.01)
     loop()
 except KeyboardInterrupt:
     print("Cancelled")

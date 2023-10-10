@@ -70,7 +70,6 @@ def loop():
             if 0 < base.getLightGuns():
                    break
         # check for push button
-        print(res)
         if 1 == base.getKeys() % 2:
             if res < 2:
                 mode = (mode + 1 ) % 2

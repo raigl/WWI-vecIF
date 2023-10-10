@@ -55,7 +55,7 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 35   # .0E-6
+move_delay = 65   # .0E-6
 draw_delay = 55   # .0E-6
  
 def delay_us(duration):
