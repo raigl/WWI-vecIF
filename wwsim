@@ -1,0 +1,18 @@
+#
+set -x
+export PYTHONPATH="$HOME/wwi/Whirlwind-Instruction-Simulator/Py/Common"
+echo DISPLAY=$DISPLAY
+# if no parameter, use my test programme
+if test $# -eq 0
+then exec $HOME/wwi/WWI-VecIF/src/vecIF.py
+fi
+# if only one parameter, use default options
+if test $# -eq 1
+then # append .acore 
+     fn="$1"
+     test -r "$fn" || fn="$fn.acore"
+     python3 $PYTHONPATH/../Sim/wwsim.py -q --AnalogScope --NoToggleSwitchWarning $fn
+else python3 $PYTHONPATH/../Sim/wwsim.py $*
+fi
+ 
+ 
