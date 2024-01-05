@@ -47,7 +47,7 @@ Longer vectors must be drawn as segments.
 The display should be setup such that increasing both coordinates
 moves the point right and up.
 
-Character display not done by hardware as in WWI,
+Character display is not done by hardware as in WWI,
 but by software as a chain of segments;
 this requires a precise setup of the mid voltage
 to 1.023V; otherwise the characters are blurred.
@@ -56,15 +56,15 @@ Vector drawing was inspried by the Vectrex gaming console.
 Original WWI hardware used a more elaborate method:
 A fixed ramp generator (for each coordinate) was multiplied by
 the vector delta coordinate provided. 
-The advantage is that the strobe at start and end points could be
-slightly before and after the end of the ramp, ensuring
-precise start and end points.
+The advantage is that the end points and do not depend on the precision of the integration capacitor.
+Also the strobe start and end could be slightly before and after the end of the ramp, 
+ensuring that a chain of vectors has no gaps.
 
 
 ## Displays
  
 To display the vectors, the display device must have analog inputs for X/Y mode
-and a Z input for intensitiy modulation.
+and a (digital) Z input for intensitiy modulation.
 
 To better mimic the original, the vector interface board provides
 a display bus connector to be used with one or more display tap boards,
@@ -97,18 +97,19 @@ thus the potentimeters on the tap board are required.
 
 Several other oscilloscopes have a Z option, but often require
 at least 20V to blank the trace.
-For this cases, the tap board has provisions for a voltage converter
+For this cases, a variant of the tap board has provisions for a voltage converter
 and corresponding output amplifier.
-Sometimes (e.g. Hameg) are designed for blanking small parts of the trace
-only, as internally a diode clamps the coupling capacitor output.
-
+Some (e.g. Hameg) are designed for blanking small parts of the trace
+only by a diode clamp for the coupling capacitor;
+this diode has to be removed or reversed, otherwise the blanking would not work.
+ 
 A Hameg HM512 was succesfully modified by reversing the diode and also
 adding internally a small amplifier to obtain larger voltage swing
 from the Z-input. 
 
 ## I²C Bus
 
-The interface board has a connected to access the Rapi's (second) I²C bus,
+The interface board has a connection to access the Rapi's (second) I²C bus,
 shifted to 5V operation.
 
 With upto eight PCF8574, each can drive 8 swiches and lamps.
