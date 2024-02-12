@@ -37,7 +37,7 @@ def do_show() :
         y = int(i / 4)
         x = -0.6 + x * 0.4
         y = -0.7 + y * 0.4
-        drawNumber(x+0.05, y, i)
+        drawNumber(x+0.1, y, i)
         base.drawPoint(x, y)
         if 0 < base.getLightGuns():
             was_gun = True
