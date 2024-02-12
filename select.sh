@@ -1,5 +1,4 @@
 #
-# Top-Level Application Dispatcher for Whirlwind Simulator
 code=~pi/wwi/Whirlwind-Instruction-Simulator/Code-Samples
 base=~pi/wwi/WWI-VecIF/src
 while true
