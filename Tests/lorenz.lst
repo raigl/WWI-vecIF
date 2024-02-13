@@ -1,0 +1,130 @@
+                        ; Draw the Lorenz attractor
+
+                        ; Commonly used are the equations:
+                        ; dx/dt = 10y - 10x
+                        ; dy/dt = 28x - xz - y
+                        ; dz/dt = xy - 2.667z
+
+                        ; Integration is done by simply adding a small fraction of the derivate:
+                        ; x[n+1] = x[n] + dx/dt * ∆t
+
+                        ; For computers with fixed point numbers in the range -1 .. +1
+                        ; (as well as for analog computers), these equations are not directly
+                        ; usable, because the values of the variables are out of range.
+
+                        ; Coefficients > 1 for multiplications are acceptable, as the product
+                        ; is in general not close to 1;
+                        ; but large coefficients for variables are normally overflow prone.
+
+                        ; Divding each coefficient by the largest factor 28 just requires
+                        ; a diffent ∆t, which is a compromise between speed and accuracy anyhow:
+                        ; x' = 0.3571 y - 0.3571 x
+                        ; y' = x - 0.03571 xz - 0.03571 y
+                        ; z' = 0.03571 xy - 0.0952 z
+
+                        ; However, the values for x, y and z are unchanged:
+                        ; |x| > 19, |y| > 25, z > 47
+
+                        ; A uniform scaling with 50 gives:
+                        ; x' = 0.3571 y - 0.3571 x
+                        ; y' = x - 50*0.03571 xz - 0.03571 y  = x - 1.7855 xz - 0.03571 y
+                        ; z' = 50*0.03571 xy - 0.0952 z  = 1.7855 xy - 0.0952 z
+
+                        ; If ∆t is too large, the simulation is quick, but may fail due to overflow.
+                        ; If it is too small, the simulation will hang, because there is no change.
+
+                        ; See also text on scaling for analog computers, which need updating:
+                        ; https://rclab.de/analogrechner/lorenz-attraktor
+
+                        ; Author: Rainer Glaschick, Paderborn, Germany
+                        ; Copyright: Public domain
+
+
+                        ; start at octal 040
+                        .org 0.00020   ;  
+
+                        ; show mid reference point on scope line 0
+@0020:160020            srr  16        ; clear AC 
+@0021:000600            si   0.00600   ;  
+@0022:024000            rc   0         ;  
+@0023:            loop:                ;  
+                        ; show the x/y point on scope line 0
+@0023:100105            ca   y         ;  @@JumpedToBy a0103 
+@0024:000600            si   0.00600   ;  
+@0025:100104            ca   x         ;  
+@0026:024000            rc   0         ;  
+
+                        ; show the z/y point on scope line 1
+@0027:100106            ca   z         ;  
+@0030:000601            si   0.00601   ;  
+@0031:100104            ca   x         ;  
+@0032:024000            rc   0         ;  
+
+                        ; dx = y * 0.3571 + (-x) * 0.3571
+@0033:100105            ca   y         ;  
+@0034:140113            mr   f3571     ;  
+@0035:040107            ts   dx        ;  
+@0036:114104            su   x         ;  
+@0037:140113            mr   f3571     ;  
+@0040:110107            ad   dx        ;  
+@0041:040107            ts   dx        ;  
+
+                        ; dy = (-x) * z ( 1 + 0.7885) + x + (-y) * 0.03571
+@0042:104104            cs   x         ; -x 
+@0043:140106            mr   z         ;  
+@0044:040110            ts   dy        ; -xz 
+@0045:140116            mr   f7855     ;  
+@0046:110110            ad   dy        ; -1.7885 xz 
+@0047:110104            ad   x         ;  
+@0050:040110            ts   dy        ;  
+@0051:104105            cs   y         ;  
+@0052:140114            mr   f03571    ;  
+@0053:110110            ad   dy        ;  
+@0054:040110            ts   dy        ;  
+
+                        ; dz = x * y * (1 + 0.7855) + (-z) * 0.0952
+@0055:100104            ca   x         ;  
+@0056:140105            mr   y         ;  
+@0057:040111            ts   dz        ;  
+@0060:140116            mr   f7855     ;  
+@0061:110111            ad   dz        ;  
+@0062:040111            ts   dz        ;  
+@0063:104106            cs   z         ;  
+@0064:140117            mr   f0952     ;  
+@0065:110111            ad   dz        ;  
+@0066:040111            ts   dz        ;  
+
+                        ; x += dx * dt
+@0067:100107            ca   dx        ;  
+@0070:140112            mr   dt        ;  
+@0071:110104            ad   x         ;  
+@0072:040104            ts   x         ;  
+
+                        ; y += dy * dt
+@0073:100110            ca   dy        ;  
+@0074:140112            mr   dt        ;  
+@0075:110105            ad   y         ;  
+@0076:040105            ts   y         ;  
+
+                        ; z += dz * dt
+@0077:100111            ca   dz        ;  
+@0100:140112            mr   dt        ;  
+@0101:110106            ad   z         ;  
+@0102:040106            ts   z         ;  
+
+@0103:074023            sp   loop      ;  
+
+                        ; data words
+@0104:137777         x: .word -0.5      ; horizontal coordinate @@WrittenBy a0072 ReadBy a0025 a0031 a0036 a0042 a0047 a0055 a0071 
+@0105:000000         y: .word +0.0      ; vertical coordinate @@WrittenBy a0076 ReadBy a0023 a0033 a0051 a0056 a0075 
+@0106:040000         z: .word +0.5      ;  @@WrittenBy a0102 ReadBy a0027 a0043 a0063 a0101 
+@0107:000000        dx: .word 0         ;  @@WrittenBy a0035 a0041 ReadBy a0040 a0067 
+@0110:000000        dy: .word 0         ;  @@WrittenBy a0044 a0050 a0054 ReadBy a0046 a0053 a0073 
+@0111:000000        dz: .word 0         ;  @@WrittenBy a0057 a0062 a0066 ReadBy a0061 a0065 a0077 
+@0112:013412        dt: .word +0.18     ; time delta < 0.2 @@ReadBy a0070 a0074 a0100 
+@0113:026665     f3571: .word +0.3571   ;  @@ReadBy a0034 a0037 
+@0114:002222    f03571: .word +0.03571  ;  @@ReadBy a0052 
+@0115:021727       f28: .word +0.28     ;  
+@0116:062213     f7855: .word +0.7855   ;  @@ReadBy a0045 a0060 
+@0117:006057     f0952: .word +0.0952   ;  @@ReadBy a0064 
+

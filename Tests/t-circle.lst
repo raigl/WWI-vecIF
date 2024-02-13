@@ -1,0 +1,133 @@
+
+                        ;  circle calculated by Tchebysheff approximation of sine
+
+                        .org 0         ;  
+@0000:000000      zero: .word 0         ; these are set automatically @@JumpedToBy a0130 a0146 a0170 ReadBy a0051 
+@0001:000001       one: .word 1         ;  
+
+                        .org 0o40      ;  
+@0040:        main_loop:                ;  
+@0040:074050            sp   circle    ;  @@JumpedToBy a0041 
+@0041:074040            sp   main_loop  ;  
+
+@0042:071463  circle_r: .word +0.9      ; radius @@ReadBy a0055 a0061 
+@0043:000000  circle_x: .word 0         ;  @@WrittenBy a0052 a0125 ReadBy a0053 a0057 a0123 
+@0044:004210  circle_inc: .word +0.06667  ; 1/15 @@ReadBy a0124 
+@0045:035674  circle_max: .word +0.46669  ;  @@ReadBy a0126 
+@0046:000000  circle_sin: .word 0         ;  @@WrittenBy a0062 ReadBy a0065 a0071 a0075 a0101 a0103 a0107 a0113 a0117 
+@0047:000000  circle_cos: .word 0         ;  @@WrittenBy a0056 ReadBy a0063 a0067 a0073 a0077 a0105 a0111 a0115 a0121 
+
+                        ;  draw a circle
+
+@0050:          circle:                ;  
+@0050:050130            ta   circle_ret  ;  @@JumpedToBy a0040 
+@0051:100000            ca   0         ;  
+@0052:040043            ts   circle_x  ;  
+@0053:        circle_loop:                ;  
+                        ; calc sin and cos and scale with radius
+@0053:100043            ca   circle_x  ;  @@JumpedToBy a0127 
+@0054:074154            sp   cos       ;  
+@0055:140042            mr   circle_r  ;  
+@0056:040047            ts   circle_cos  ;  
+
+@0057:100043            ca   circle_x  ;  
+@0060:074135            sp   sin       ;  
+@0061:140042            mr   circle_r  ;  
+@0062:040046            ts   circle_sin  ;  
+
+                        ; display
+@0063:100047            ca   circle_cos  ;  
+@0064:000600            si   0.00600   ;  
+@0065:100046            ca   circle_sin  ;  
+@0066:024000            rc   0         ;  
+
+@0067:104047            cs   circle_cos  ;  
+@0070:000600            si   0.00600   ;  
+@0071:100046            ca   circle_sin  ;  
+@0072:024000            rc   0         ;  
+
+@0073:104047            cs   circle_cos  ;  
+@0074:000600            si   0.00600   ;  
+@0075:104046            cs   circle_sin  ;  
+@0076:024000            rc   0         ;  
+
+@0077:100047            ca   circle_cos  ;  
+@0100:000600            si   0.00600   ;  
+@0101:104046            cs   circle_sin  ;  
+@0102:024000            rc   0         ;  
+
+@0103:100046            ca   circle_sin  ;  
+@0104:000600            si   0.00600   ;  
+@0105:100047            ca   circle_cos  ;  
+@0106:024000            rc   0         ;  
+
+@0107:104046            cs   circle_sin  ;  
+@0110:000600            si   0.00600   ;  
+@0111:100047            ca   circle_cos  ;  
+@0112:024000            rc   0         ;  
+
+@0113:104046            cs   circle_sin  ;  
+@0114:000600            si   0.00600   ;  
+@0115:104047            cs   circle_cos  ;  
+@0116:024000            rc   0         ;  
+
+@0117:100046            ca   circle_sin  ;  
+@0120:000600            si   0.00600   ;  
+@0121:104047            cs   circle_cos  ;  
+@0122:024000            rc   0         ;  
+
+                        ; loop increment
+@0123:100043            ca   circle_x  ;  
+@0124:110044            ad   circle_inc  ;  
+@0125:040043            ts   circle_x  ;  
+@0126:114045            su   circle_max  ;  
+@0127:070053            cp   circle_loop  ;  
+
+@0130:        circle_ret:                ;  
+@0130:074000            sp   0_0       ;  @@WrittenBy a0050 
+
+
+                        ;  calculate sin(x*pi/2) for _1.0 < x < +1.0
+                        ;  approixmated by x + 0.55 * x * (1.0 - x^2)
+                        ;  input and output is AC
+@0131:000000     sin_x: .word 0         ;  @@WrittenBy a0136 ReadBy a0137 a0143 a0145 
+@0132:000000   sin_tmp: .word 0         ;  @@WrittenBy a0140 ReadBy a0142 
+@0133:077777     sin_1: .word 0.77777   ; closest to 1.0 @@ReadBy a0141 
+@0134:043412   sin_555: .word +0.555    ;  @@ReadBy a0144 
+@0135:050146       sin: ta   sin_ret   ;  @@JumpedToBy a0060 
+@0136:040131            ts   sin_x     ;  
+@0137:140131            mr   sin_x     ;  
+@0140:040132            ts   sin_tmp   ;  
+@0141:100133            ca   sin_1     ;  
+@0142:114132            su   sin_tmp   ;  
+@0143:140131            mr   sin_x     ;  
+@0144:140134            mr   sin_555   ;  
+@0145:110131            ad   sin_x     ;  
+@0146:         sin_ret:                ;  
+@0146:074000            sp   0-0       ;  @@WrittenBy sin 
+
+                        ;  calculate cos(x*pi/2) for _1.0 < x < +1.0
+                        ;  approixmated by (1.0 - x^2) - 0.2222 * x^2 * (1.0 - x^2)
+                        ;  input and output is AC
+@0147:000000     cos_x: .word 0         ;  @@WrittenBy a0155 ReadBy a0156 
+@0150:000000    cos_x2: .word 0         ;  @@WrittenBy a0157 ReadBy a0161 a0163 
+@0151:000000   cos_tmp: .word 0         ;  @@WrittenBy a0162 a0166 ReadBy a0165 a0167 
+@0152:077777     cos_1: .word 0.77777   ;  @@ReadBy a0160 
+@0153:016152   cos_222: .word +0.222    ;  @@ReadBy a0164 
+@0154:050170       cos: ta   cos_ret   ;  @@JumpedToBy a0054 
+@0155:040147            ts   cos_x     ;  
+@0156:140147            mr   cos_x     ;  
+@0157:040150            ts   cos_x2    ;  
+@0160:100152            ca   cos_1     ;  
+@0161:114150            su   cos_x2    ;  
+@0162:040151            ts   cos_tmp   ;  
+@0163:140150            mr   cos_x2    ;  
+@0164:140153            mr   cos_222   ;  
+@0165:114151            su   cos_tmp   ;  
+@0166:040151            ts   cos_tmp   ;  
+@0167:104151            cs   cos_tmp   ;  
+@0170:         cos_ret:                ;  
+@0170:074000            sp   0-0       ;  @@WrittenBy cos 
+
+
+

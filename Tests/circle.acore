@@ -1,0 +1,26 @@
+
+; *** Core Image ***
+%File: circle.ww
+%TapeID: None
+@C0020: 0100101 0000600 0100100 0024000 0104100 0140102 0110101 0040101 
+@C0030: 0140102 0110100 0040100 0160020 0000600 0024000 0074020  None   
+@C0100: 0000000 0040000 0010000  None    None    None    None    None   
+@S0020: loop
+@S0100: sin
+@S0101: cos
+@S0102: dt
+@N0020: x = horizontal value
+@N0021: set x coordinate
+@N0022: y  = vertial value
+@N0023: set y coordinate and draw point
+@N0024: -y
+@N0025: -y dt
+@N0026: x - y dt
+@N0027: x = x - y dt
+@N0030: x dt
+@N0031: y + x dt
+@N0032: y = y + x dt
+@N0033: clear AC
+@N0100: vertical coordinate
+@N0101: horizontal coordinate +
+@N0102: time delta

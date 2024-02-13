@@ -1,0 +1,276 @@
+
+; small test for the hour ticks on a wall clock
+; table copied from Guy's clock programme
+    
+        .org 0
+zero:    .word 0
+
+        .org 0o40
+main_loop: 
+        ;sp  draw_60_points
+        sp  draw_12_ticks
+        sp  main_loop
+        
+draw_12_ticks:
+        ta d12_ret
+        ca 0            ; clear index    
+        ts lkup_idx
+d12_loop:
+        ; get the start point
+        sp lookup       ; read table at _index to _x and _y
+        
+        ; draw small vector towards zero
+        ca  lkup_y
+        si  0.01600
+        
+        ; prepare (negated) distances
+        ca  0
+        su  lkup_x
+        md  drt_mask_x
+        ts  drt_dxy     ; keep sign
+        ca  0
+        su  lkup_y
+        clh 8           ; shifts with sign to br 
+        ab  drt_dxy
+        ca  lkup_x
+        rc  drt_dxy
+        
+        ; increment index by 5 and check:
+        ca lkup_idx
+        ad drt_5
+        ts lkup_idx
+        su drt_60
+        cp d12_loop
+d12_ret: sp 0
+        
+draw_60_points:
+        ta d60_ret
+        ca 0            ; clear index    
+        ts lkup_idx
+d60_loop:
+        ; get point
+        sp lookup       ; read table at _index to _x and _y
+        
+        ; draw point
+        ca  lkup_y
+        si  0.00600
+        ca  lkup_x
+        rc  0
+                
+        ; increment index by 1 and check:
+        ao lkup_idx
+        su drt_60
+        cp d60_loop
+d60_ret: sp 0
+
+drt_60: .word 59
+drt_5:  .word 5
+drt_dxy: .word 0
+drt_mask_x: .word 0o176000     ; sign included
+drt_mask_y: .word 0o000074     ; sign excluded
+ 
+;
+; lookup sine table from lkup_idx, store x and y in lkup_x and lkup_y
+lookup:
+        ta  lkup_ret
+        ca  lkup_idx    ; clears BR
+        slr 1           
+        ad  minutes_ring_pointer
+        td  lkup1
+lkup1:  ca  0-0
+        ts  lkup_x
+        ao  lkup1
+        td  lkup2
+lkup2:  ca  0-0
+        ts  lkup_y
+lkup_ret:
+        sp  0
+lkup_idx: .word 0
+lkup_x: .word 0
+lkup_y: .word 0
+
+
+minutes_ring_pointer:    .word minutes_ring
+minutes_ring:
+      .word +0.00000
+      .word +0.90000
+
+      .word +0.09407
+      .word +0.89506
+
+      .word +0.18712
+      .word +0.88033
+
+      .word +0.27811
+      .word +0.85595
+
+      .word +0.36606
+      .word +0.82219
+
+      .word +0.44999
+      .word +0.77942
+
+      .word +0.52900
+      .word +0.72811
+
+      .word +0.60221
+      .word +0.66883
+
+      .word +0.66883
+      .word +0.60221
+
+      .word +0.72811
+      .word +0.52900
+
+      .word +0.77942
+      .word +0.45000
+
+      .word +0.82219
+      .word +0.36606
+
+      .word +0.85595
+      .word +0.27811
+
+      .word +0.88033
+      .word +0.18712
+
+      .word +0.89506
+      .word +0.09407
+
+      .word +0.90000
+      .word -0.00000
+
+      .word +0.89506
+      .word -0.09407
+
+      .word +0.88033
+      .word -0.18712
+
+      .word +0.85595
+      .word -0.27811
+
+      .word +0.82219
+      .word -0.36606
+
+      .word +0.77942
+      .word -0.44999
+
+      .word +0.72811
+      .word -0.52900
+
+      .word +0.66883
+      .word -0.60221
+
+      .word +0.60221
+      .word -0.66883
+
+      .word +0.52900
+      .word -0.72811
+
+      .word +0.44999
+      .word -0.77942
+
+      .word +0.36606
+      .word -0.82219
+
+      .word +0.27811
+      .word -0.85595
+
+      .word +0.18712
+      .word -0.88033
+
+      .word +0.09407
+      .word -0.89506
+
+      .word -0.00000
+      .word -0.90000
+
+      .word -0.09407
+      .word -0.89506
+
+      .word -0.18712
+      .word -0.88033
+
+      .word -0.27811
+      .word -0.85595
+
+      .word -0.36606
+      .word -0.82219
+
+      .word -0.45000
+      .word -0.77942
+
+      .word -0.52900
+      .word -0.72811
+
+      .word -0.60221
+      .word -0.66883
+
+      .word -0.66883
+      .word -0.60221
+
+      .word -0.72811
+      .word -0.52900
+
+      .word -0.77942
+      .word -0.45000
+
+      .word -0.82219
+      .word -0.36606
+
+      .word -0.85595
+      .word -0.27811
+
+      .word -0.88033
+      .word -0.18712
+
+      .word -0.89506
+      .word -0.09407
+
+      .word -0.90000
+      .word +0.00000
+
+      .word -0.89506
+      .word +0.09407
+
+      .word -0.88033
+      .word +0.18712
+
+      .word -0.85595
+      .word +0.27811
+
+      .word -0.82219
+      .word +0.36606
+
+      .word -0.77942
+      .word +0.45000
+
+      .word -0.72811
+      .word +0.52900
+
+      .word -0.66883
+      .word +0.60221
+
+      .word -0.60221
+      .word +0.66883
+
+      .word -0.52900
+      .word +0.72811
+
+      .word -0.45000
+      .word +0.77942
+
+      .word -0.36606
+      .word +0.82219
+
+      .word -0.27811
+      .word +0.85595
+
+      .word -0.18712
+      .word +0.88033
+
+      .word -0.09407
+      .word +0.89506
+
+
+

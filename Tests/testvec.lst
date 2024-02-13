@@ -1,0 +1,56 @@
+                        .org 0o40      ;  
+                        ;  draw largest vector from origin to 0.125/0.125
+@0040:            loop:                ;  
+                        ; sp  chars
+                        ; origin
+@0040:100102            ca   xy0       ;  @@JumpedToBy a0100 
+@0041:000600            si   0.00600   ;  
+@0042:024000            rc   0         ;  
+                        ; largest vector from origin
+@0043:100102            ca   xy0       ;  
+@0044:001600            si   0.01600   ;  
+@0045:024101            rc   dxy       ;  
+                        ; assumed target point at 1/8 away from origin
+@0046:100103            ca   xy1       ;  
+@0047:000600            si   0.00600   ;  
+@0050:024000            rc   0         ;  
+
+                        ; 	draw the charcter 0 in normal (small) size,
+                        ; 	plus reference point (start address, with 7 units)
+@0051:           chars:                ;  
+@0051:100105            ca   xy2       ;  
+@0052:002600            si   0.02600   ;  
+@0053:024104            rc   ch8       ;  
+@0054:100105            ca   xy2       ;  
+@0055:000600            si   0.00600   ;  
+@0056:024000            rc   0         ;  
+@0057:100105            ca   xy2       ;  
+@0060:000600            si   0.00600   ;  
+@0061:100106            ca   xy2a      ;  
+@0062:024000            rc   0         ;  
+
+                        ; 	draw the charcter 0 enlarged plus reference point (start)
+@0063:          charsl:                ;  
+@0063:000014            si   12        ; enlarge 
+@0064:100105            ca   xy2       ;  
+@0065:002600            si   0.02600   ;  
+@0066:100102            ca   xy0       ;  
+@0067:024104            rc   ch8       ;  
+@0070:100105            ca   xy2       ;  
+@0071:000600            si   0.00600   ;  
+@0072:100102            ca   xy0       ;  
+@0073:024000            rc   0         ;  
+@0074:000015            si   13        ; normal 
+
+                        ;  point with max distance from origin
+@0075:100107            ca   xy99      ;  
+@0076:000600            si   0.00600   ;  
+@0077:024000            rc   0         ;  
+@0100:074040            sp   loop      ;  
+@0101:076174       dxy: .word 0.76174   ; maximum vector distance 
+@0102:000000       xy0: .word 0         ; origin @@ReadBy a0040 a0043 a0066 a0072 
+@0103:010000       xy1: .word +0.125    ; predicted target @@ReadBy a0046 
+@0104:077400       ch8: .word 0.77400   ; pattern for 0 character 
+@0105:012000       xy2: .word 0.12000   ;  @@ReadBy a0051 a0054 a0057 a0064 a0070 
+@0106:012340      xy2a: .word 0.12340   ;  @@ReadBy a0061 
+@0107:077777      xy99: .word 0.77777   ;  @@ReadBy a0075 

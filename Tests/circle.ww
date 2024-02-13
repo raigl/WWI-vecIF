@@ -1,0 +1,55 @@
+;   Draw a centered circle using the Minsky algorithm
+
+;   With x=cos(t) and y=sin(t), the time derivates are:
+;       dx = -sin(t) dt 
+;       dy = cos(t) dt
+;   Each variable is incremented by a small fraction dt of the other one.
+;   It is an ellipse slanted by 45°, very close to a circle, if the
+;   factor is a (negative) power of 2.       
+;   The radius of the circle is unexpectedly stable, 
+;   because the new values are computed sequentially, not in parallel.
+;   On an analog computer, an amplitude stabilisation is required.
+
+;   Programming aims at clarity, thus no shifts for multiplications.
+
+;   Inspired by the code provided by Angelo Papenhoff 
+;   (https://github.com/aap/whirlwind)  
+;   who also provided the stability reasoning from
+;       https://www.blurb.com/b/2172660-minskys-trinskys-3rd-edition
+;   See also 
+;       https://blog.hrvoje.org/2020/05/drawing-circles/
+
+
+        
+;   start at octal 040     
+        .org 0.00020       
+loop:   ca  cos             ; x = horizontal value  
+        si  0.00600         ; set x coordinate
+        ca  sin             ; y  = vertial value
+        rc  0               ; set y coordinate and draw point
+                
+        ; iteration of increments
+        cs  sin             ; -y
+        mr  dt              ; -y dt
+        ad  cos             ; x - y dt
+        ts  cos             ; x = x - y dt
+        mr  dt              ; x dt
+        ad  sin             ; y + x dt
+        ts  sin             ; y = y + x dt
+        
+        ; draw the middle as a reference
+        srr 16              ; clear AC
+        si  0.00600
+        rc  0
+
+        
+        sp  loop
+        
+        
+;   data words
+        .org 0.00100       ; for easier debugging
+sin:    .word  0           ; vertical coordinate 
+cos:    .word  +0.5        ; horizontal coordinate +
+dt:     .word  0.10000     ; time delta
+
+ 

@@ -1,0 +1,56 @@
+        .org 0o40
+; draw largest vector from origin to 0.125/0.125
+loop:
+        ; sp  chars
+        ; origin
+        ca  xy0
+        si  0.00600
+        rc  0
+        ; largest vector from origin
+        ca  xy0
+        si  0.01600
+        rc  dxy
+        ; assumed target point at 1/8 away from origin
+        ca  xy1
+        si  0.00600
+        rc  0
+        
+;	draw the charcter 0 in normal (small) size,
+;	plus reference point (start address, with 7 units)
+chars:
+        ca  xy2
+        si  0.02600
+        rc  ch8	
+        ca  xy2
+        si  0.00600
+        rc  0
+        ca  xy2
+        si  0.00600
+        ca  xy2a
+        rc 0
+        
+;	draw the charcter 0 enlarged plus reference point (start)
+charsl:
+        si  12 		; enlarge
+        ca  xy2
+        si  0.02600
+        ca  xy0
+        rc  ch8	
+        ca  xy2
+        si  0.00600
+        ca  xy0
+        rc  0
+        si  13		; normal
+        
+; point with max distance from origin
+        ca  xy99
+        si  0.00600
+        rc  0
+        sp  loop
+dxy:    .word   0.76174             ; maximum vector distance
+xy0:    .word   0                   ; origin
+xy1:    .word   +0.125              ; predicted target 
+ch8:    .word   0.77400		    ; pattern for 0 character
+xy2:    .word   0.12000
+xy2a:	.word   0.12340
+xy99:	.word   0.77777

@@ -1,0 +1,130 @@
+;   Draw the Lorenz attractor
+
+;   Commonly used are the equations:
+;       dx/dt = 10y - 10x
+;       dy/dt = 28x - xz - y
+;       dz/dt = xy - 2.667z
+
+;   Integration is done by simply adding a small fraction of the derivate:
+;       x[n+1] = x[n] + dx/dt * ∆t
+
+;   For computers with fixed point numbers in the range -1 .. +1
+;   (as well as for analog computers), these equations are not directly
+;   usable, because the values of the variables are out of range.
+
+;   Coefficients > 1 for multiplications are acceptable, as the product
+;   is in general not close to 1;
+;   but large coefficients for variables are normally overflow prone.
+
+;   Divding each coefficient by the largest factor 28 just requires
+;   a diffent ∆t, which is a compromise between speed and accuracy anyhow:
+;       x' = 0.3571 y - 0.3571 x
+;       y' = x - 0.03571 xz - 0.03571 y
+;       z' = 0.03571 xy - 0.0952 z
+   
+;   However, the values for x, y and z are unchanged:
+;       |x| > 19, |y| > 25, z > 47
+
+;   A uniform scaling with 50 gives:
+;       x' = 0.3571 y - 0.3571 x
+;       y' = x - 50*0.03571 xz - 0.03571 y  = x - 1.7855 xz - 0.03571 y
+;       z' = 50*0.03571 xy - 0.0952 z  = 1.7855 xy - 0.0952 z
+
+;   If ∆t is too large, the simulation is quick, but may fail due to overflow.
+;   If it is too small, the simulation will hang, because there is no change.
+
+;   See also text on scaling for analog computers, which need updating:
+;       https://rclab.de/analogrechner/lorenz-attraktor
+
+;   Author: Rainer Glaschick, Paderborn, Germany
+;   Copyright: Public domain 
+
+
+;   start at octal 040     
+        .org 0.00020  
+        
+        ; show mid reference point on scope line 0
+        srr 16              ; clear AC
+        si  0.00600
+        rc  0
+loop:
+        ; show the x/y point on scope line 0
+        ca  y
+        si  0.00600
+        ca  x
+        rc  0
+        
+        ; show the z/y point on scope line 1
+        ca  z
+        si  0.00601
+        ca  x
+        rc  0
+        
+        ; dx = y * 0.3571 + (-x) * 0.3571
+        ca  y
+        mr  f3571
+        ts  dx
+        su  x
+        mr  f3571
+        ad  dx
+        ts  dx 
+        
+        ; dy = (-x) * z ( 1 + 0.7885) + x + (-y) * 0.03571          
+        cs  x               ; -x
+        mr  z
+        ts  dy              ; -xz
+        mr  f7855
+        ad  dy              ; -1.7885 xz
+        ad  x
+        ts  dy
+        cs  y
+        mr  f03571
+        ad  dy
+        ts  dy
+        
+        ; dz = x * y * (1 + 0.7855) + (-z) * 0.0952 
+        ca  x
+        mr  y
+        ts  dz
+        mr  f7855
+        ad  dz
+        ts  dz
+        cs  z
+        mr  f0952
+        ad  dz
+        ts  dz
+        
+        ; x += dx * dt
+        ca  dx
+        mr  dt
+        ad  x
+        ts  x
+        
+        ; y += dy * dt
+        ca  dy
+        mr  dt
+        ad  y
+        ts  y
+        
+        ; z += dz * dt
+        ca  dz
+        mr  dt
+        ad  z
+        ts  z
+        
+        sp  loop
+        
+;   data words
+x:      .word  -0.5         ; horizontal coordinate 
+y:      .word  +0.0         ; vertical coordinate 
+z:      .word  +0.5
+dx:     .word  0
+dy:     .word  0
+dz:     .word  0
+dt:     .word  +0.18         ; time delta < 0.2
+f3571:  .word  +0.3571
+f03571: .word  +0.03571
+f28:    .word  +0.28
+f7855:  .word  +0.7855
+f0952:  .word  +0.0952
+ 

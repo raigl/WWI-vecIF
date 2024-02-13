@@ -1,0 +1,55 @@
+                        ;    Draw a centered circle using the Minsky algorithm
+
+                        ;    With x=cos(t) and y=sin(t), the time derivates are:
+                        ;        dx = -sin(t) dt
+                        ;        dy = cos(t) dt
+                        ;    Each variable is incremented by a small fraction dt of the other one.
+                        ;    It is an ellipse slanted by 45°, very close to a circle, if the
+                        ;    factor is a (negative) power of 2.
+                        ;    The radius of the circle is unexpectedly stable,
+                        ;    because the new values are computed sequentially, not in parallel.
+                        ;    On an analog computer, an amplitude stabilisation is required.
+
+                        ;    Programming aims at clarity, thus no shifts for multiplications.
+
+                        ;    Inspired by the code provided by Angelo Papenhoff
+                        ;    (https://github.com/aap/whirlwind)
+                        ;    who also provided the stability reasoning from
+                        ;        https://www.blurb.com/b/2172660-minskys-trinskys-3rd-edition
+                        ;    See also
+                        ;        https://blog.hrvoje.org/2020/05/drawing-circles/
+
+
+
+                        ;    start at octal 040
+                        .org 0.00020   ;  
+@0020:100101      loop: ca   cos       ; x = horizontal value @@JumpedToBy a0036 
+@0021:000600            si   0.00600   ; set x coordinate 
+@0022:100100            ca   sin       ; y  = vertial value 
+@0023:024000            rc   0         ; set y coordinate and draw point 
+
+                        ; iteration of increments
+@0024:104100            cs   sin       ; -y 
+@0025:140102            mr   dt        ; -y dt 
+@0026:110101            ad   cos       ; x - y dt 
+@0027:040101            ts   cos       ; x = x - y dt 
+@0030:140102            mr   dt        ; x dt 
+@0031:110100            ad   sin       ; y + x dt 
+@0032:040100            ts   sin       ; y = y + x dt 
+
+                        ; draw the middle as a reference
+@0033:160020            srr  16        ; clear AC 
+@0034:000600            si   0.00600   ;  
+@0035:024000            rc   0         ;  
+
+
+@0036:074020            sp   loop      ;  
+
+
+                        ;    data words
+                        .org 0.00100   ; for easier debugging 
+@0100:000000       sin: .word 0         ; vertical coordinate @@WrittenBy a0032 ReadBy a0022 a0024 a0031 
+@0101:040000       cos: .word +0.5      ; horizontal coordinate + @@WrittenBy a0027 ReadBy loop a0026 
+@0102:010000        dt: .word 0.10000   ; time delta @@ReadBy a0025 a0030 
+
+

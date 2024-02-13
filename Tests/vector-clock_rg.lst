@@ -1,0 +1,531 @@
+
+                        ;  Vector clock to run on Whirlwind
+                        ;  rewritten by Rainer Glaschick
+                        ;  version 1.1 2024-11-18
+
+                        .org 0         ;  
+@0000:000000      zero: .word 0         ; these are set automatically @@JumpedToBy a0074 d12_ret d60_ret a0232 a0253 dsh_ret a0376 ReadBy a0053 a0060 a0065 a0072 a0104 a0130 a0137 a0202 a0223 lkup1 lkup2 a0272 a0311 a0332 
+@0001:000001       one: .word 1         ;  
+
+                        .org 0o40      ;  
+@0040:        main_loop:                ;  
+@0040:074103            sp   draw_12_ticks  ; draw the 12 hour markers @@JumpedToBy a0046 
+@0041:074260            sp   draw_second_hand  ;  
+@0042:074277            sp   draw_minute_hand  ;  
+@0043:074316            sp   draw_hour_hand  ;  
+@0044:074047            sp   update_time  ;  
+@0045:074127            sp   draw_60_points  ; minutes points give much flicker 
+@0046:074040            sp   main_loop  ;  
+
+
+                        ;  update the values for the seconds, minutes and hours
+                        ;  should use the timer register when available
+
+@0047:        update_time:                ;  
+@0047:050074            ta   upt_ret   ;  @@JumpedToBy a0044 
+                        ; si 7
+                        ; rd  0-0
+                        ; ...
+                        ; simulate timer by sub-count
+@0050:130075            ao   time_sub  ;  
+@0051:114102            su   k11       ;  
+@0052:070074            cp   upt_ret   ;  
+@0053:100000            ca   0         ;  
+@0054:040075            ts   time_sub  ;  
+                        ; increment seconds
+@0055:130076            ao   time_seconds  ;  
+@0056:114101            su   k59       ;  
+@0057:070074            cp   upt_ret   ; not yet overfow 
+@0060:100000            ca   0         ;  
+@0061:040076            ts   time_seconds  ;  
+                        ; increment minutes
+@0062:130077            ao   time_minutes  ;  
+@0063:114101            su   k59       ;  
+@0064:070074            cp   upt_ret   ;  
+@0065:100000            ca   0         ;  
+@0066:040077            ts   time_minutes  ;  
+                        ; increment hours
+@0067:130100            ao   time_hours  ;  
+@0070:114102            su   k11       ;  
+@0071:070074            cp   upt_ret   ;  
+@0072:100000            ca   0         ;  
+@0073:040100            ts   time_hours  ;  
+@0074:         upt_ret:                ;  
+@0074:074000            sp   0-0       ;  @@JumpedToBy a0052 a0057 a0064 a0071 WrittenBy a0047 
+@0075:000000  time_sub: .word 0         ;  @@WrittenBy a0050 a0054 ReadBy a0050 
+@0076:000021  time_seconds: .word 17        ;  @@WrittenBy a0055 a0061 ReadBy a0055 a0261 
+@0077:000070  time_minutes: .word 56        ;  @@WrittenBy a0062 a0066 ReadBy a0062 a0300 
+@0100:000012  time_hours: .word 10        ;  @@WrittenBy a0067 a0073 ReadBy a0067 a0317 a0321 
+@0101:000073       k59: .word 59        ;  @@ReadBy a0056 a0063 
+@0102:000013       k11: .word 11        ;  @@ReadBy a0051 a0070 
+
+
+                        ;   draw the 12 hour markers
+                        ;   characters 12 are to small
+
+@0103:        draw_12_ticks:                ;  
+@0103:050126            ta   d12_ret   ;  @@JumpedToBy a0040 
+@0104:100000            ca   0         ; clear index 
+@0105:040254            ts   lkup_idx  ;  
+@0106:        d12_loop:                ;  
+                        ; get the start point
+@0106:074240            sp   lookup    ; read table at _index to _x and _y @@JumpedToBy a0125 
+
+                        ; draw small vector towards zero
+@0107:100256            ca   lkup_y    ;  
+@0110:001600            si   0.01600   ;  
+
+                        ; prepare (negated) distances
+@0111:104255            cs   lkup_x    ;  
+@0112:174236            md   drt_mask_x  ;  
+@0113:040235            ts   drt_dxy   ; keep sign 
+@0114:104256            cs   lkup_y    ;  
+@0115:171010            clh  8         ; shifts with sign to br 
+@0116:060235            ab   drt_dxy   ;  
+@0117:100255            ca   lkup_x    ;  
+@0120:024235            rc   drt_dxy   ;  
+
+                        ; increment index by 5 and check:
+@0121:100254            ca   lkup_idx  ;  
+@0122:110234            ad   drt_5     ;  
+@0123:040254            ts   lkup_idx  ;  
+@0124:114233            su   drt_60    ;  
+@0125:070106            cp   d12_loop  ;  
+@0126:074000   d12_ret: sp   0         ;  @@WrittenBy a0103 
+
+
+                        ;  draw 60 seconds marks
+                        ;  creates flicker; thus can be switched on and off by the central point
+                        ;  uses symmetry for speed, and no loop to skip minute mark
+
+@0127:        draw_60_points:                ;  
+@0127:050156            ta   d60_ret   ;  @@JumpedToBy a0045 
+
+                        ; check light gun
+@0130:100000            ca   0         ;  
+@0131:000600            si   0.00600   ;  
+@0132:024000            rc   0         ;  
+@0133:014000            rd   0         ;  
+@0134:070161            cp   d60_flip  ;  
+                        ; show or no show
+@0135:100160            ca   d60_flag  ;  
+                        ; show
+@0136:070156            cp   d60_ret   ;  
+
+@0137:            show:                ;  
+                        ; show
+@0137:100000            ca   0         ; clear index 
+@0140:040254            ts   lkup_idx  ; 0 
+@0141:130254            ao   lkup_idx  ; 1 
+@0142:074165            sp   d60_draw  ;  
+@0143:130254            ao   lkup_idx  ; 2 
+@0144:074165            sp   d60_draw  ;  
+@0145:130254            ao   lkup_idx  ; 3 
+@0146:074165            sp   d60_draw  ;  
+@0147:130254            ao   lkup_idx  ; 4 
+@0150:074165            sp   d60_draw  ;  
+@0151:130254            ao   lkup_idx  ; 5: skip 
+@0152:130254            ao   lkup_idx  ; 6 
+@0153:074165            sp   d60_draw  ;  
+@0154:130254            ao   lkup_idx  ; 7 
+@0155:074165            sp   d60_draw  ;  
+
+@0156:074000   d60_ret: sp   0         ;  @@JumpedToBy a0136 a0164 WrittenBy a0127 
+
+@0157:100000  d60_bit0: .word 1.00000   ;  @@ReadBy a0162 
+@0160:100000  d60_flag: .word 1.00000   ;  @@WrittenBy a0163 ReadBy a0135 a0161 
+                        ;  flip flag to display seconds
+@0161:        d60_flip:                ;  
+@0161:100160            ca   d60_flag  ;  @@JumpedToBy a0134 
+@0162:030157            sd   d60_bit0  ; flip sign bit 
+@0163:040160            ts   d60_flag  ;  
+@0164:074156            sp   d60_ret   ;  
+
+                        ;  draw 8 points
+@0165:        d60_draw:                ;  
+@0165:050232            ta   d60d_ret  ;  @@JumpedToBy a0142 a0144 a0146 a0150 a0153 a0155 
+
+@0166:040254            ts   lkup_idx  ;  
+@0167:074240            sp   lookup    ; read table at _index to _x and _y 
+
+                        ; draw 8 points
+@0170:100256            ca   lkup_y    ;  
+@0171:000600            si   0.00600   ;  
+@0172:100255            ca   lkup_x    ;  
+@0173:024000            rc   0         ;  
+
+@0174:104256            cs   lkup_y    ;  
+@0175:000600            si   0.00600   ;  
+@0176:100255            ca   lkup_x    ;  
+@0177:024000            rc   0         ;  
+
+@0200:104256            cs   lkup_y    ;  
+@0201:000600            si   0.00600   ;  
+@0202:100000            ca   0         ;  
+@0203:114255            su   lkup_x    ;  
+@0204:024000            rc   0         ;  
+
+@0205:100256            ca   lkup_y    ;  
+@0206:000600            si   0.00600   ;  
+@0207:104255            cs   lkup_x    ;  
+@0210:024000            rc   0         ;  
+
+@0211:100255            ca   lkup_x    ;  
+@0212:000600            si   0.00600   ;  
+@0213:100256            ca   lkup_y    ;  
+@0214:024000            rc   0         ;  
+
+@0215:104255            cs   lkup_x    ;  
+@0216:000600            si   0.00600   ;  
+@0217:100256            ca   lkup_y    ;  
+@0220:024000            rc   0         ;  
+
+@0221:104255            cs   lkup_x    ;  
+@0222:000600            si   0.00600   ;  
+@0223:100000            ca   0         ;  
+@0224:114256            su   lkup_y    ;  
+@0225:024000            rc   0         ;  
+
+@0226:100255            ca   lkup_x    ;  
+@0227:000600            si   0.00600   ;  
+@0230:104256            cs   lkup_y    ;  
+@0231:024000            rc   0         ;  
+@0232:        d60d_ret:                ;  
+@0232:074000            sp   0-0       ;  @@WrittenBy a0165 
+
+@0233:000073    drt_60: .word 59        ;  @@ReadBy a0124 
+@0234:000005     drt_5: .word 5         ;  @@ReadBy a0122 
+@0235:000000   drt_dxy: .word 0         ;  @@WrittenBy a0113 a0116 a0361 a0365 
+@0236:176000  drt_mask_x: .word 0o176000  ; sign included @@ReadBy a0112 a0360 
+@0237:000074  drt_mask_y: .word 0o000074  ; sign excluded 
+
+
+                        ;  lookup sine table from lkup_idx, store x and y in lkup_x and lkup_y
+
+@0240:          lookup:                ;  
+@0240:050253            ta   lkup_ret  ;  @@JumpedToBy a0106 a0167 a0263 a0302 a0323 
+@0241:100254            ca   lkup_idx  ; clears BR 
+@0242:154001            slr  1         ;  
+@0243:110377            ad   minutes_ring_pointer  ;  
+@0244:044245            td   lkup1     ;  
+@0245:100000     lkup1: ca   0-0       ;  @@WrittenBy a0244 a0247 ReadBy a0247 
+@0246:040255            ts   lkup_x    ;  
+@0247:130245            ao   lkup1     ;  
+@0250:044251            td   lkup2     ;  
+@0251:100000     lkup2: ca   0-0       ;  @@WrittenBy a0250 
+@0252:040256            ts   lkup_y    ;  
+@0253:        lkup_ret:                ;  
+@0253:074000            sp   0         ;  @@WrittenBy a0240 
+@0254:000000  lkup_idx: .word 0         ;  @@WrittenBy a0105 a0123 a0140 a0141 a0143 a0145 a0147 a0151 a0152 a0154 a0166 a0262 a0301 a0322 ReadBy a0121 a0141 a0143 a0145 a0147 a0151 a0152 a0154 a0241 
+@0255:000000    lkup_x: .word 0         ;  @@WrittenBy a0246 ReadBy a0111 a0117 a0172 a0176 a0203 a0207 a0211 a0215 a0221 a0226 a0264 a0303 a0324 
+@0256:000000    lkup_y: .word 0         ;  @@WrittenBy a0252 ReadBy a0107 a0114 a0170 a0174 a0200 a0205 a0213 a0217 a0224 a0230 a0267 a0306 a0327 
+
+
+
+                        ;  draw the clock hand for the seconds
+                        ;  just a line from the center to the second marks
+                        ;  needs 8 segments to be drawn
+                        ;  Input is the number of seconds, 0..59
+                        ;  The coordinates of the points divided by 8 are thus the distances
+@0257:010000  seconds_scale: .word +0.125    ;  @@ReadBy a0265 a0270 
+@0260:        draw_second_hand:                ;  
+@0260:050346            ta   dsh_ret   ;  @@JumpedToBy a0041 
+
+@0261:100076            ca   time_seconds  ;  
+@0262:040254            ts   lkup_idx  ;  
+@0263:074240            sp   lookup    ;  
+
+@0264:100255            ca   lkup_x    ;  
+@0265:140257            mr   seconds_scale  ;  
+@0266:040351            ts   dsh_dx    ;  
+
+@0267:100256            ca   lkup_y    ;  
+@0270:140257            mr   seconds_scale  ;  
+@0271:040352            ts   dsh_dy    ;  
+
+@0272:100000            ca   0         ;  
+@0273:040347            ts   dsh_x     ;  
+@0274:040350            ts   dsh_y     ;  
+@0275:074336            sp   dsh_do8   ;  
+
+                        ;  draw the clock hand for the minutes
+                        ;  uses same segment length, only 6 segments
+                        ;  see above for seconds hand
+@0276:010000  minutes_scale: .word +0.125    ;  @@ReadBy a0304 a0307 
+@0277:        draw_minute_hand:                ;  
+@0277:050346            ta   dsh_ret   ;  @@JumpedToBy a0042 
+
+@0300:100077            ca   time_minutes  ;  
+@0301:040254            ts   lkup_idx  ;  
+@0302:074240            sp   lookup    ;  
+
+@0303:100255            ca   lkup_x    ;  
+@0304:140276            mr   minutes_scale  ;  
+@0305:040351            ts   dsh_dx    ;  
+
+@0306:100256            ca   lkup_y    ;  
+@0307:140276            mr   minutes_scale  ;  
+@0310:040352            ts   dsh_dy    ;  
+
+@0311:100000            ca   0         ;  
+@0312:040347            ts   dsh_x     ;  
+@0313:040350            ts   dsh_y     ;  
+@0314:074340            sp   dsh_do6   ;  
+
+                        ;  The hours hand goes from 0 to 11, map to 0, 5, 10, ... 55
+                        ;  to multiply an integer with 5, shift twice and add
+@0315:006314  hours_scale: .word +0.100    ;  @@ReadBy a0325 a0330 
+@0316:        draw_hour_hand:                ;  
+@0316:050346            ta   dsh_ret   ;  @@JumpedToBy a0043 
+
+@0317:100100            ca   time_hours  ;  
+@0320:154002            slr  2         ; *4 
+@0321:110100            ad   time_hours  ; *5 
+@0322:040254            ts   lkup_idx  ;  
+@0323:074240            sp   lookup    ;  
+
+@0324:100255            ca   lkup_x    ;  
+@0325:140315            mr   hours_scale  ;  
+@0326:040351            ts   dsh_dx    ;  
+
+@0327:100256            ca   lkup_y    ;  
+@0330:140315            mr   hours_scale  ;  
+@0331:040352            ts   dsh_dy    ;  
+
+@0332:100000            ca   0         ;  
+@0333:040347            ts   dsh_x     ;  
+@0334:040350            ts   dsh_y     ;  
+@0335:074341            sp   dsh_do5   ;  
+
+                        ; replace loop by unravelling
+@0336:         dsh_do8:                ;  
+@0336:074353            sp   dsh_plot  ;  @@JumpedToBy a0275 
+@0337:         dsh_do7:                ;  
+@0337:074353            sp   dsh_plot  ;  
+@0340:         dsh_do6:                ;  
+@0340:074353            sp   dsh_plot  ;  @@JumpedToBy a0314 
+@0341:         dsh_do5:                ;  
+@0341:074353            sp   dsh_plot  ;  @@JumpedToBy a0335 
+@0342:074353            sp   dsh_plot  ;  
+@0343:074353            sp   dsh_plot  ;  
+@0344:074353            sp   dsh_plot  ;  
+@0345:074353            sp   dsh_plot  ;  
+
+@0346:074000   dsh_ret: sp   0-0       ;  @@WrittenBy a0260 a0277 a0316 
+@0347:000000     dsh_x: .word 0         ;  @@WrittenBy a0273 a0312 a0333 a0372 ReadBy a0366 a0370 
+@0350:000000     dsh_y: .word 0         ;  @@WrittenBy a0274 a0313 a0334 a0375 ReadBy a0354 a0373 
+@0351:000000    dsh_dx: .word 0         ;  @@WrittenBy a0266 a0305 a0326 ReadBy a0356 a0371 
+@0352:000000    dsh_dy: .word 0         ;  @@WrittenBy a0271 a0310 a0331 ReadBy a0362 a0374 
+
+@0353:        dsh_plot:                ;  
+@0353:050376            ta   dsh_plot_ret  ;  @@JumpedToBy a0336 a0337 a0340 a0341 a0342 a0343 a0344 a0345 
+
+
+@0354:100350            ca   dsh_y     ; position 
+@0355:001600            si   0.01600   ; draw small vector 
+@0356:100351            ca   dsh_dx    ;  
+@0357:154003            slr  3         ;  
+@0360:174236            md   drt_mask_x  ;  
+@0361:040235            ts   drt_dxy   ; keep sign 
+@0362:100352            ca   dsh_dy    ;  
+@0363:154003            slr  3         ;  
+@0364:171010            clh  8         ; shifts with sign to br 
+@0365:060235            ab   drt_dxy   ;  
+@0366:100347            ca   dsh_x     ;  
+@0367:024235            rc   drt_dxy   ;  
+
+                        ; advance
+@0370:100347            ca   dsh_x     ;  
+@0371:110351            ad   dsh_dx    ;  
+@0372:040347            ts   dsh_x     ;  
+@0373:100350            ca   dsh_y     ;  
+@0374:110352            ad   dsh_dy    ;  
+@0375:040350            ts   dsh_y     ;  
+@0376:        dsh_plot_ret:                ;  
+@0376:074000            sp   0-0       ;  @@WrittenBy a0353 
+
+
+@0377:000400  minutes_ring_pointer: .word minutes_ring  ;  @@ReadBy a0243 
+@0400:        minutes_ring:                ;  
+@0400:000000            .word +0.00000  ;  
+@0401:071463            .word +0.90000  ;  
+
+@0402:006012            .word +0.09407  ;  
+@0403:071221            .word +0.89506  ;  
+
+@0404:013763            .word +0.18712  ;  
+@0405:070256            .word +0.88033  ;  
+
+@0406:021631            .word +0.27811  ;  
+@0407:066617            .word +0.85595  ;  
+
+@0410:027333            .word +0.36606  ;  
+@0411:064475            .word +0.82219  ;  
+
+@0412:034631            .word +0.44999  ;  
+@0413:061704            .word +0.77942  ;  
+
+@0414:041666            .word +0.52900  ;  
+@0415:056462            .word +0.72811  ;  
+
+@0416:046425            .word +0.60221  ;  
+@0417:052634            .word +0.66883  ;  
+
+@0420:052634            .word +0.66883  ;  
+@0421:046425            .word +0.60221  ;  
+
+@0422:056462            .word +0.72811  ;  
+@0423:041666            .word +0.52900  ;  
+
+@0424:061704            .word +0.77942  ;  
+@0425:034631            .word +0.45000  ;  
+
+@0426:064475            .word +0.82219  ;  
+@0427:027333            .word +0.36606  ;  
+
+@0430:066617            .word +0.85595  ;  
+@0431:021631            .word +0.27811  ;  
+
+@0432:070256            .word +0.88033  ;  
+@0433:013763            .word +0.18712  ;  
+
+@0434:071221            .word +0.89506  ;  
+@0435:006012            .word +0.09407  ;  
+
+@0436:071463            .word +0.90000  ;  
+@0437:177777            .word -0.00000  ;  
+
+@0440:071221            .word +0.89506  ;  
+@0441:171765            .word -0.09407  ;  
+
+@0442:070256            .word +0.88033  ;  
+@0443:164014            .word -0.18712  ;  
+
+@0444:066617            .word +0.85595  ;  
+@0445:156146            .word -0.27811  ;  
+
+@0446:064475            .word +0.82219  ;  
+@0447:150444            .word -0.36606  ;  
+
+@0450:061704            .word +0.77942  ;  
+@0451:143146            .word -0.44999  ;  
+
+@0452:056462            .word +0.72811  ;  
+@0453:136111            .word -0.52900  ;  
+
+@0454:052634            .word +0.66883  ;  
+@0455:131352            .word -0.60221  ;  
+
+@0456:046425            .word +0.60221  ;  
+@0457:125143            .word -0.66883  ;  
+
+@0460:041666            .word +0.52900  ;  
+@0461:121315            .word -0.72811  ;  
+
+@0462:034631            .word +0.44999  ;  
+@0463:116073            .word -0.77942  ;  
+
+@0464:027333            .word +0.36606  ;  
+@0465:113302            .word -0.82219  ;  
+
+@0466:021631            .word +0.27811  ;  
+@0467:111160            .word -0.85595  ;  
+
+@0470:013763            .word +0.18712  ;  
+@0471:107521            .word -0.88033  ;  
+
+@0472:006012            .word +0.09407  ;  
+@0473:106556            .word -0.89506  ;  
+
+@0474:177777            .word -0.00000  ;  
+@0475:106314            .word -0.90000  ;  
+
+@0476:171765            .word -0.09407  ;  
+@0477:106556            .word -0.89506  ;  
+
+@0500:164014            .word -0.18712  ;  
+@0501:107521            .word -0.88033  ;  
+
+@0502:156146            .word -0.27811  ;  
+@0503:111160            .word -0.85595  ;  
+
+@0504:150444            .word -0.36606  ;  
+@0505:113302            .word -0.82219  ;  
+
+@0506:143146            .word -0.45000  ;  
+@0507:116073            .word -0.77942  ;  
+
+@0510:136111            .word -0.52900  ;  
+@0511:121315            .word -0.72811  ;  
+
+@0512:131352            .word -0.60221  ;  
+@0513:125143            .word -0.66883  ;  
+
+@0514:125143            .word -0.66883  ;  
+@0515:131352            .word -0.60221  ;  
+
+@0516:121315            .word -0.72811  ;  
+@0517:136111            .word -0.52900  ;  
+
+@0520:116073            .word -0.77942  ;  
+@0521:143146            .word -0.45000  ;  
+
+@0522:113302            .word -0.82219  ;  
+@0523:150444            .word -0.36606  ;  
+
+@0524:111160            .word -0.85595  ;  
+@0525:156146            .word -0.27811  ;  
+
+@0526:107521            .word -0.88033  ;  
+@0527:164014            .word -0.18712  ;  
+
+@0530:106556            .word -0.89506  ;  
+@0531:171765            .word -0.09407  ;  
+
+@0532:106314            .word -0.90000  ;  
+@0533:000000            .word +0.00000  ;  
+
+@0534:106556            .word -0.89506  ;  
+@0535:006012            .word +0.09407  ;  
+
+@0536:107521            .word -0.88033  ;  
+@0537:013763            .word +0.18712  ;  
+
+@0540:111160            .word -0.85595  ;  
+@0541:021631            .word +0.27811  ;  
+
+@0542:113302            .word -0.82219  ;  
+@0543:027333            .word +0.36606  ;  
+
+@0544:116073            .word -0.77942  ;  
+@0545:034631            .word +0.45000  ;  
+
+@0546:121315            .word -0.72811  ;  
+@0547:041666            .word +0.52900  ;  
+
+@0550:125143            .word -0.66883  ;  
+@0551:046425            .word +0.60221  ;  
+
+@0552:131352            .word -0.60221  ;  
+@0553:052634            .word +0.66883  ;  
+
+@0554:136111            .word -0.52900  ;  
+@0555:056462            .word +0.72811  ;  
+
+@0556:143146            .word -0.45000  ;  
+@0557:061704            .word +0.77942  ;  
+
+@0560:150444            .word -0.36606  ;  
+@0561:064475            .word +0.82219  ;  
+
+@0562:156146            .word -0.27811  ;  
+@0563:066617            .word +0.85595  ;  
+
+@0564:164014            .word -0.18712  ;  
+@0565:070256            .word +0.88033  ;  
+
+@0566:171765            .word -0.09407  ;  
+@0567:071221            .word +0.89506  ;  
+
+
+
