@@ -11,8 +11,12 @@ import math
 import random
 
 #
-version = "0.2e"
+version = "0.3a"
 
+move_delay = 15   # .0E-6     # wait to settle after a new position
+draw_delay = 55   # .0E-6     # >50 us to do a stoke
+hold_delay = 10   # .0E-6     # one-shot recovery time
+ 
 # pin definitions in BCM numbering
 pin_doMove = 17
 pin_doDraw = 22
@@ -55,10 +59,11 @@ def setDA(n, val):
     spi.writebytes(outv)
     
     
-move_delay = 35   # .0E-6
-draw_delay = 55   # .0E-6
- 
 def delay_us(duration):
+    """ the time.sleep() function is not accurate enough,
+    and there is nothing more to be done.
+    So busy waiting is used.
+    """
     stop = time.perf_counter_ns() + 1000 * duration
     while time.perf_counter_ns() < stop:
         time.sleep(0)
@@ -69,7 +74,6 @@ def movePoint(posx, posy):
     setDA(1, posy)
     gpio.output(pin_doMove, 1)
     delay_us(move_delay)
-    #time.sleep(move_delay*1e-6)
     gpio.output(pin_doMove, 0)
                         
 def drawSegment(speedx, speedy):		
@@ -78,7 +82,6 @@ def drawSegment(speedx, speedy):
     setDA(1, speedy)
     gpio.output(pin_doDraw, 1)
     delay_us(draw_delay)
-    #time.sleep(draw_delay * 1e-6)
     gpio.output(pin_doDraw, 0)
     
 def setOutLine(line):
@@ -232,10 +235,9 @@ def setKey(n, b):
 def drawVector(x0, y0, x1, y1):
     """ General vector drawing
         if length exceeds the (short) maximum,
-        a chain of segments is used without repostioning;
-        however, to ensure accurate length,
-        after half the way the vector is drawn
-        from the end.
+        a chain of segments is used.
+        As after a draw, a recovery time is needed;
+        in order to avoid gaps, no repositioning is used
     """
     # determine distances 
     dx = x1 - x0;
@@ -244,7 +246,7 @@ def drawVector(x0, y0, x1, y1):
     sx = dx * 4.05				# more than 4.0 to avoid gaps
     sy = dy * 4.05
     
-    # might be a short vector, then draw now (helps debugging)
+    # might be a short vector, then draw directly
     if abs(sx) <= 1.0 and abs(sy) <= 1.0 :
        drawSmallVector(x0, y0, sx, sy)
        return
@@ -253,17 +255,15 @@ def drawVector(x0, y0, x1, y1):
     xsegs = 1 + math.floor(abs(sx))
     ysegs = 1 + math.floor(abs(sy))
     segs = max(xsegs, ysegs)
-    # make it even number to switch exacly at the middle
-    if segs % 2 == 1:
-        segs += 1
     # reduce speed by number of segments
     sx = sx / segs;
     sy = sy / segs;
  
-    # start the chain
+    # do start the chain
     movePoint(x0, y0)
     for i in range(0, segs):
         drawSegment(sx, sy)
+        delay_us(hold_delay)
 
 def drawCircle(x0, y0, r):
     """
@@ -279,15 +279,13 @@ def drawCircle(x0, y0, r):
     y1 = y0 + r
     movePoint(x1, y1)
     for i in range(1, points+1):
-        # enable if circle is not good enough
-        #if i % 6 == 0:
-            #movePoint(x1, y1)
         t = math.radians(i * 360/points)
         x2 = x0 + r*math.sin(t)
         y2 = y0 + r*math.cos(t)
         dx = x2 - x1
         dy = y2 - y1
         drawSegment(4.0*dx, 4.0*dy)
+        delay_us(hold_delay)
         x1 = x2
         y1 = y2
         
@@ -337,6 +335,8 @@ def drawCharacter(x0, y0, segs, enlarge=4.0) :
                 # delay_us(move_delay)
                 movePoint(x1, y1)
                 toMove = False
+            else:
+                delay_us(hold_delay)
             drawSegment(4*dx, 4*dy)
         else:
             toMove = True

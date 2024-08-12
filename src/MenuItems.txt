@@ -1,0 +1,18 @@
+  ---- --------------------------------------- ------------
+  00   does nothing                            
+  01   Various tests stand-alone               RG
+  02   Tic-Tac-Toe for 2 Screens stand-alone   RG
+  03   Lorenz attractor                        RG
+  04   Bouncing Ball                           paper tape
+  05   Mad Game                                paper tape
+  06   Blackjack                               paper tape
+  07   Display Test                            paper tape
+  08   Vibrating String                        paper tape
+  09   Vibrating String                        paper tape
+  10   Vibrating String                        paper tape
+  11   Track-While-Scan                        paper tape
+  12   Number Counting Bin, Dec, Oct, Hex      paper tape
+  13   Display Test                            GF
+  14   Clock (as quick as possible)            RG
+  15   Exit Menu System                        
+  ---- --------------------------------------- ------------
